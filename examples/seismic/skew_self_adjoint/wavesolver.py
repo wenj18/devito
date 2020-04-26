@@ -149,6 +149,10 @@ class SSA_ISO_AcousticWaveSolver(object):
                               time_order=2, space_order=self.space_order)
 
         # Execute operator, "splatting" the model dictionary entries
+#         op = self.op_fwd(save)
+#         f = open('ccode.c++', 'w') 
+#         print(op.ccode, file=f)
+#         f.close() 
         summary = self.op_fwd(save).apply(**self.model, src=src, rec=rec, u=u, **kwargs)
         return rec, u, summary
 

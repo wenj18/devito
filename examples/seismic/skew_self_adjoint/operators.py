@@ -109,7 +109,7 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     eqn = iso_stencil(u, model, forward=True)
 
     # Construct expression to inject source values, injecting at p(t+dt)
-    t = v.dimensions[0]
+    t = u.dimensions[0]
     src_term = src.inject(field=u.forward, expr=src * t.spacing**2 * v**2 / b)
 
     # Create interpolation expression for receivers, extracting at p(t)
@@ -119,6 +119,7 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
+    print(spacing_map)
 
     return Operator(eqn + src_term + rec_term, subs=spacing_map,
                     name='ISO_FwdOperator', **kwargs)
@@ -177,6 +178,7 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
+    print(spacing_map)
 
     return Operator(eqn + rec_term + src_term, subs=spacing_map,
                     name='ISO_AdjOperator', **kwargs)
@@ -248,6 +250,7 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
+    print(spacing_map)
 
     return Operator(eqn1 + src_term + eqn2 + rec_term, subs=spacing_map,
                     name='ISO_JacobianFwdOperator', **kwargs)
@@ -311,6 +314,7 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
+    print(spacing_map)
 
     return Operator(eqn + rec_term + [dv_update], subs=spacing_map,
                     name='ISO_JacobianAdjOperator', **kwargs)
