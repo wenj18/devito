@@ -4,7 +4,8 @@ from scipy.ndimage import gaussian_filter
 from scipy import misc
 
 from conftest import skipif
-from devito import Grid, Function, TimeFunction, switchconfig
+from devito import (Grid, Function, VectorFunction, TensorFunction, TimeFunction,
+                    switchconfig)
 from devito.builtins import (assign, norm, gaussian_smooth, initialize_function,
                              inner, mmin, mmax)
 from devito.data import LEFT, RIGHT
@@ -273,6 +274,16 @@ class TestBuiltinsResult(object):
         term1 = np.linalg.norm(rec0.data)
         term2 = norm(rec0)
         assert np.isclose(term1/term2 - 1, 0.0, rtol=0.0, atol=1e-5)
+
+    def test_norm_tensor(self):
+        """
+        Test norm with tensor functions.
+        """
+        grid = Grid(shape=(100, 100))
+
+        f = VectorFunction(name='f', grid=grid)
+
+        from IPython import embed; embed()
 
     def test_min_max_sparse(self):
         """
