@@ -54,7 +54,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
     assert qmin > 0, "supplied qmin value [%f] must be positive" % (qmin)
     assert qmax > 0, "supplied qmax value [%f] must be positive" % (qmax)
     assert npad > 0, "supplied npad value [%f] must be positive" % (npad)
-    for n in wOverQ.data.shape:
+    for n in wOverQ.grid.shape:
         if n - 2*npad < 1:
             raise ValueError("2 * npad must not exceed dimension size!")
 
@@ -63,9 +63,9 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
     lqmin = np.log(qmin)
     lqmax = np.log(qmax)
 
-    if len(wOverQ.data.shape) == 2:
+    if len(wOverQ.grid.shape) == 2:
         # 2d operations
-        nx, nz = wOverQ.data.shape
+        nx, nz = wOverQ.grid.shape
         kxMin, kzMin = np.ogrid[:nx, :nz]
         kxArr, kzArr = np.minimum(kxMin, nx-1-kxMin), np.minimum(kzMin, nz-1-kzMin)
         nval1 = np.minimum(kxArr, kzArr)
@@ -75,7 +75,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
 
     else:
         # 3d operations
-        nx, ny, nz = wOverQ.data.shape
+        nx, ny, nz = wOverQ.grid.shape
         kxMin, kyMin, kzMin = np.ogrid[:nx, :ny, :nz]
         kxArr = np.minimum(kxMin, nx-1-kxMin)
         kyArr = np.minimum(kyMin, ny-1-kyMin)
