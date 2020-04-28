@@ -61,35 +61,18 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     lqmin = np.log(qmin)
     lqmax = np.log(qmax)
 
-
     # 1. Get distance to closest boundary in all dimensions
-    # 2. Logarithmic variation between qmin, qmax across absorbing boundary
-    pos = Min(*[Min(d - d.symbolic_min, d.symbolic_max - d) for d in wOverQ.dimensions]) / npad
+    # 2. Logarithmic variation between qmin, qmax across the absorbing boundary
+    pos = Min(1, Min(*[Min(d - d.symbolic_min, d.symbolic_max - d)
+                       for d in wOverQ.dimensions]) / npad)
     val = exp(lqmin + pos * (lqmax - lqmin))
     eqn = Eq(wOverQ, val)
-
-#     if len(wOverQ.grid.shape) == 2:
-#         x, z = wOverQ.dimensions
-#         posX = Min(x - x.symbolic_min, x.symbolic_max - x)
-#         posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
-#         pos = Min(1, Min(posX, posZ) / npad)
-#         val = exp(lqmin + pos * (lqmax - lqmin))
-#         eqn = Eq(wOverQ, val)
-
-#     else:
-#         x, y, z = wOverQ.dimensions
-#         posX = Min(x - x.symbolic_min, x.symbolic_max - x)
-#         posY = Min(y - y.symbolic_min, y.symbolic_max - y)
-#         posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
-#         pos = Min(1, Min(posX, Min(posY, posZ)) / npad)
-#         val = exp(lqmin + pos * (lqmax - lqmin))
-#         eqn = Eq(wOverQ, val)
 
     Operator([eqn], name='initialize_wOverQ')()
 
     # If we apply the smoother, we must renormalize output to [qmin,qmax]
     if sigma > 0:
-        print("sigma > 0")
+        print("sigma=", sigma)
         smooth = gaussian_smooth(wOverQ.data, sigma=sigma)
         smin, smax = np.min(smooth), np.max(smooth)
         smooth[:] = qmin + (qmax - qmin) * (smooth - smin) / (smax - smin)
@@ -98,10 +81,9 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     wOverQ.data[:] = w / wOverQ.data[:]
 
     # report min/max output Q value
-    q1 = (np.min(1 / (wOverQ.data / w)))
-    q2 = (np.max(1 / (wOverQ.data / w)))
+    q1, q2 = np.min(wOverQ.data), np.max(wOverQ.data)
     t2 = timer()
-    print("setup_wOverQ_equations ran in %.4f seconds -- min/max Q values; %.4f %.4f"
+    print("setup_wOverQ ran in %.4f seconds -- min/max w/Q values; %.6e %.6e"
           % (t2-t1, q1, q2))
 
 
@@ -171,6 +153,7 @@ def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
 
     # Note if we apply the gaussian smoother, renormalize output to [qmin,qmax]
     if sigma > 0:
+        print("sigma=", sigma)
         nval2[:] = gaussian_smooth(nval3, sigma=sigma)
         nmin2, nmax2 = np.min(nval2), np.max(nval2)
         nval3[:] = qmin + (qmax - qmin) * (nval2 - nmin2) / (nmax2 - nmin2)
@@ -178,10 +161,9 @@ def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
     wOverQ.data[:] = w / nval3
 
     # report min/max output Q value
-    q1 = (np.min(1 / (wOverQ.data / w)))
-    q2 = (np.max(1 / (wOverQ.data / w)))
+    q1, q2 = np.min(wOverQ.data), np.max(wOverQ.data)
     t2 = timer()
-    print("setup_wOverQ ran in %.4f seconds -- min/max Q values; %.4f %.4f"
+    print("setup_wOverQ_numpy ran in %.4f seconds -- min/max w/Q values; %.6e %.6e"
           % (t2-t1, q1, q2))
 
 
