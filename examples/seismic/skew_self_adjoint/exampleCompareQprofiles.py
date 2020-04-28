@@ -42,6 +42,8 @@ qa = np.log10(w / wOverQ_a.data)
 qb = np.log10(w / wOverQ_b.data)
 lmin, lmax = np.log10(qmin), np.log10(qmax)
 
+print("max difference; ", np.max(qa - qb))
+
 # qa = wOverQ_a.data
 # qb = wOverQ_b.data
 # lmin, lmax = np.min(wOverQ_a.data), np.max(wOverQ_a.data)
@@ -49,38 +51,29 @@ lmin, lmax = np.log10(qmin), np.log10(qmax)
 plt_extent = [origin[0], origin[0] + spacing[0]*(shape[0]-1),
               origin[1] + spacing[1]*(shape[1]-1), origin[1]]
 
-print("plt_extent; ", plt_extent)
-
-fig, ax = plt.subplots(1, 2, figsize=(12, 8))
-plt.subplots_adjust(left=0.05, right=0.95, wspace=0.25)
-
+plt.figure(figsize=(12,8))
 plt.subplot(1, 2, 1)
-im025 = plt.imshow(np.transpose(qa.data), cmap=cm.jet_r,
-                   vmin=lmin, vmax=lmax, extent=plt_extent)
+plt.imshow(np.transpose(qa.data), cmap=cm.jet_r, 
+           vmin=lmin, vmax=lmax, extent=plt_extent)
+plt.colorbar(orientation='horizontal', label='Log10 of Q(x,z)')
 plt.plot([origin[0], origin[0], extent[0], extent[0], origin[0]],
          [origin[1], extent[1], extent[1], origin[1], origin[1]],
          'white', linewidth=4, linestyle=':', label="Absorbing Boundary")
 plt.xlabel("X Coordinate (m)", labelpad=15)
 plt.ylabel("Z Coordinate (m)", labelpad=15)
-plt.title("log10 of wOverQ_a model", y=1.035)
+plt.title("log10 of wOverQ for numpy", y=1.035)
 
 plt.subplot(1, 2, 2)
-im100 = plt.imshow(np.transpose(qb.data), cmap=cm.jet_r,
-                   vmin=lmin, vmax=lmax, extent=plt_extent)
+plt.imshow(np.transpose(qb.data), cmap=cm.jet_r,
+           vmin=lmin, vmax=lmax, extent=plt_extent)
+plt.colorbar(orientation='horizontal', label='Log10 of Q(x,z)')
 plt.plot([origin[0], origin[0], extent[0], extent[0], origin[0]],
          [origin[1], extent[1], extent[1], origin[1], origin[1]],
          'white', linewidth=4, linestyle=':', label="Absorbing Boundary")
 plt.xlabel("X Coordinate (m)", labelpad=15)
 plt.ylabel("Z Coordinate (m)", labelpad=15)
-plt.title("log10 of wOverQ_b model", y=1.025)
+plt.title("log10 of wOverQ for devito Eq", y=1.025)
 
-plt.draw()
-p0 = ax[0].get_position().get_points().flatten()
-p1 = ax[1].get_position().get_points().flatten()
-print("p0; ", p0)
-print("p1; ", p1)
-ax_cbar = fig.add_axes([p0[0], 0, p1[2]-p0[0], 0.05])
-cbar = plt.colorbar(im100, cax=ax_cbar, orientation='horizontal')
-cbar.set_label('Log10 of Q(x,z)', labelpad=-75, y=1.035, rotation=0)
+plt.tight_layout()
 
 plt.show()

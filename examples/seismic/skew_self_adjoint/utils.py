@@ -61,24 +61,29 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     lqmin = np.log(qmin)
     lqmax = np.log(qmax)
 
+
     # 1. Get distance to closest boundary in all dimensions
     # 2. Logarithmic variation between qmin, qmax across absorbing boundary
-    if len(wOverQ.grid.shape) == 2:
-        x, z = wOverQ.dimensions
-        posX = Min(x - x.symbolic_min, x.symbolic_max - x)
-        posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
-        pos = Min(1, Min(posX, posZ) / npad)
-        val = exp(lqmin + pos * (lqmax - lqmin))
-        eqn = Eq(wOverQ, val)
+    pos = Min(*[Min(d - d.symbolic_min, d.symbolic_max - d) for d in wOverQ.dimensions]) / npad
+    val = exp(lqmin + pos * (lqmax - lqmin))
+    eqn = Eq(wOverQ, val)
 
-    else:
-        x, y, z = wOverQ.dimensions
-        posX = Min(x - x.symbolic_min, x.symbolic_max - x)
-        posY = Min(y - y.symbolic_min, y.symbolic_max - y)
-        posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
-        pos = Min(1, Min(posX, Min(posY, posZ)) / npad)
-        val = exp(lqmin + pos * (lqmax - lqmin))
-        eqn = Eq(wOverQ, val)
+#     if len(wOverQ.grid.shape) == 2:
+#         x, z = wOverQ.dimensions
+#         posX = Min(x - x.symbolic_min, x.symbolic_max - x)
+#         posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
+#         pos = Min(1, Min(posX, posZ) / npad)
+#         val = exp(lqmin + pos * (lqmax - lqmin))
+#         eqn = Eq(wOverQ, val)
+
+#     else:
+#         x, y, z = wOverQ.dimensions
+#         posX = Min(x - x.symbolic_min, x.symbolic_max - x)
+#         posY = Min(y - y.symbolic_min, y.symbolic_max - y)
+#         posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
+#         pos = Min(1, Min(posX, Min(posY, posZ)) / npad)
+#         val = exp(lqmin + pos * (lqmax - lqmin))
+#         eqn = Eq(wOverQ, val)
 
     Operator([eqn], name='initialize_wOverQ')()
 
