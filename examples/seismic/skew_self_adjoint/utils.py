@@ -1,10 +1,11 @@
 from timeit import default_timer as timer
+from sympy import exp, Min
 import numpy as np
-from devito import Grid, Function, SpaceDimension, Constant
+from devito import (Grid, Constant, Function, SpaceDimension, Eq, Operator)
 from examples.seismic import RickerSource, Receiver, TimeAxis
 from devito.builtins import gaussian_smooth
 
-__all__ = ['critical_dt', 'setup_wOverQ', 'defaultSetupIso']
+__all__ = ['critical_dt', 'setup_wOverQ', 'setup_wOverQ_numpy', 'defaultSetupIso']
 
 
 def critical_dt(v):
@@ -22,31 +23,29 @@ def critical_dt(v):
     return v.dtype("%.5e" % dt)
 
 
-def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
+def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     """
     Initialise spatially variable w/Q field used to implement attenuation and
-    absorb outgoing waves at the edges of the model. Uses an outer product
-    via numpy.ogrid[:n1, :n2] to speed up loop traversal for 2d and 3d.
-    TODO: stop wasting so much memory with 9 tmp arrays ...
+    absorb outgoing waves at the edges of the model. Uses Devito Operator.
 
     Parameters
     ----------
-    wOverQ : Function
+    wOverQ : Function, required
         The omega over Q field used to implement attenuation in the model,
         and the absorbing boundary condition for outgoing waves.
-    w : float32
+    w : float32, required
         center angular frequency, e.g. peak frequency of Ricker source wavelet
         used for modeling.
-    qmin : float32
+    qmin : float32, required
         Q value at the edge of the model. Typically set to 0.1 to strongly
         attenuate outgoing waves.
-    qmax : float32
+    qmax : float32, required
         Q value in the interior of the model. Typically set to 100 as a
         reasonable and physically meaningful Q value.
-    npad : int
+    npad : int, required
         Number of points in the absorbing boundary region. Note that we expect
         this to be the same on all sides of the model.
-    sigma : float32
+    sigma : float32, optional, defaults to None
         sigma value for call to scipy gaussian smoother, default 5.
     """
     # sanity checks
@@ -59,7 +58,87 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
             raise ValueError("2 * npad must not exceed dimension size!")
 
     t1 = timer()
-    sigma = sigma or npad//11
+    lqmin = np.log(qmin)
+    lqmax = np.log(qmax)
+
+    # 1. Get distance to closest boundary in all dimensions
+    # 2. Logarithmic variation between qmin, qmax across absorbing boundary
+    if len(wOverQ.grid.shape) == 2:
+        x, z = wOverQ.dimensions
+        posX = Min(x - x.symbolic_min, x.symbolic_max - x)
+        posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
+        pos = Min(1, Min(posX, posZ) / npad)
+        val = exp(lqmin + pos * (lqmax - lqmin))
+        eqn = Eq(wOverQ, val)
+
+    else:
+        x, y, z = wOverQ.dimensions
+        posX = Min(x - x.symbolic_min, x.symbolic_max - x)
+        posY = Min(y - y.symbolic_min, y.symbolic_max - y)
+        posZ = Min(z - z.symbolic_min, z.symbolic_max - z)
+        pos = Min(1, Min(posX, Min(posY, posZ)) / npad)
+        val = exp(lqmin + pos * (lqmax - lqmin))
+        eqn = Eq(wOverQ, val)
+
+    Operator([eqn], name='initialize_wOverQ')()
+
+    # If we apply the smoother, we must renormalize output to [qmin,qmax]
+    if sigma > 0:
+        print("sigma > 0")
+        smooth = gaussian_smooth(wOverQ.data, sigma=sigma)
+        smin, smax = np.min(smooth), np.max(smooth)
+        smooth[:] = qmin + (qmax - qmin) * (smooth - smin) / (smax - smin)
+        wOverQ.data[:] = smooth
+
+    wOverQ.data[:] = w / wOverQ.data[:]
+
+    # report min/max output Q value
+    q1 = (np.min(1 / (wOverQ.data / w)))
+    q2 = (np.max(1 / (wOverQ.data / w)))
+    t2 = timer()
+    print("setup_wOverQ_equations ran in %.4f seconds -- min/max Q values; %.4f %.4f"
+          % (t2-t1, q1, q2))
+
+
+def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
+    """
+    Initialise spatially variable w/Q field used to implement attenuation and
+    absorb outgoing waves at the edges of the model.
+
+    Uses an outer product via numpy.ogrid[:n1, :n2] to speed up loop traversal
+    for 2d and 3d. TODO: stop wasting so much memory with 9 tmp arrays ...
+    Note results in 9 temporary numpy arrays for 3D.
+
+    Parameters
+    ----------
+    wOverQ : Function, required
+        The omega over Q field used to implement attenuation in the model,
+        and the absorbing boundary condition for outgoing waves.
+    w : float32, required
+        center angular frequency, e.g. peak frequency of Ricker source wavelet
+        used for modeling.
+    qmin : float32, required
+        Q value at the edge of the model. Typically set to 0.1 to strongly
+        attenuate outgoing waves.
+    qmax : float32, required
+        Q value in the interior of the model. Typically set to 100 as a
+        reasonable and physically meaningful Q value.
+    npad : int, required
+        Number of points in the absorbing boundary region. Note that we expect
+        this to be the same on all sides of the model.
+    sigma : float32, optional, defaults to None
+        sigma value for call to scipy gaussian smoother, default 5.
+    """
+    # sanity checks
+    assert w > 0, "supplied w value [%f] must be positive" % (w)
+    assert qmin > 0, "supplied qmin value [%f] must be positive" % (qmin)
+    assert qmax > 0, "supplied qmax value [%f] must be positive" % (qmax)
+    assert npad > 0, "supplied npad value [%f] must be positive" % (npad)
+    for n in wOverQ.grid.shape:
+        if n - 2*npad < 1:
+            raise ValueError("2 * npad must not exceed dimension size!")
+
+    t1 = timer()
     lqmin = np.log(qmin)
     lqmax = np.log(qmax)
 
@@ -101,7 +180,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=None):
           % (t2-t1, q1, q2))
 
 
-def defaultSetupIso(npad, shape, dtype, 
+def defaultSetupIso(npad, shape, dtype,
                     sigma=0, fpeak=0.010, qmin=0.1, qmax=100.0,
                     tmin=0.0, tmax=2000.0, bvalue=1.0/1000.0, vvalue=1.5):
     """
@@ -122,12 +201,14 @@ def defaultSetupIso(npad, shape, dtype,
     if len(shape) == 2:
         x = SpaceDimension(name='x', spacing=Constant(name='h_x', value=d))
         z = SpaceDimension(name='z', spacing=Constant(name='h_z', value=d))
-        grid = Grid(extent=extent, shape=shape, origin=origin, dimensions=(x, z), dtype=dtype)
+        grid = Grid(extent=extent, shape=shape, origin=origin,
+                    dimensions=(x, z), dtype=dtype)
     else:
         x = SpaceDimension(name='x', spacing=Constant(name='h_x', value=d))
         y = SpaceDimension(name='y', spacing=Constant(name='h_y', value=d))
         z = SpaceDimension(name='z', spacing=Constant(name='h_z', value=d))
-        grid = Grid(extent=extent, shape=shape, origin=origin, dimensions=(x, y, z), dtype=dtype)
+        grid = Grid(extent=extent, shape=shape, origin=origin,
+                    dimensions=(x, y, z), dtype=dtype)
 
     b = Function(name='b', grid=grid)
     v = Function(name='v', grid=grid)

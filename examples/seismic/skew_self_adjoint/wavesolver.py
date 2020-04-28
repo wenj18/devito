@@ -63,7 +63,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         self.wOverQ = wOverQ
 
         # initialize dictionary to store model parameters
-        self.model = { 'b': b, 'v': v, 'wOverQ': wOverQ }
+        self.model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
     # Note on use of memoized op_fwd, op_adj, op_jacobian_fwd, op_jacobian_adj:
     #   For repeated calls these functions only do the heavy lifting of building the
@@ -150,9 +150,9 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         # Execute operator, "splatting" the model dictionary entries
 #         op = self.op_fwd(save)
-#         f = open('ccode.c++', 'w') 
+#         f = open('ccode.c++', 'w')
 #         print(op.ccode, file=f)
-#         f.close() 
+#         f.close()
         summary = self.op_fwd(save).apply(**self.model, src=src, rec=rec, u=u, **kwargs)
         return rec, u, summary
 
@@ -273,7 +273,7 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         # Execute operator, "splatting" the model dictionary entries
         summary = self.op_jacobian_fwd().apply(dm=dm, **self.model, src=src, rec=rec,
-                                                    u0=u0, du=du, **kwargs)
+                                               u0=u0, du=du, **kwargs)
         return rec, u0, du, summary
 
     def jacobian_adjoint(self, rec, u0, b=None, v=None, wOverQ=None,
@@ -331,5 +331,5 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         # Execute operator, "splatting" the model dictionary entries
         summary = self.op_jacobian_adj(save).apply(dm=dm, **self.model, rec=rec,
-                                                          u0=u0, du=du, **kwargs)
+                                                   u0=u0, du=du, **kwargs)
         return dm, u0, du, summary
