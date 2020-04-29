@@ -168,8 +168,8 @@ def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
 
 
 def defaultSetupIso(npad, shape, dtype,
-                    sigma=0, fpeak=0.010, qmin=0.1, qmax=100.0,
-                    tmin=0.0, tmax=2000.0, bvalue=1.0/1000.0, vvalue=1.5):
+                    sigma=0, fpeak=0.010, qmin=0.1, qmax=100.0, tmin=0.0, tmax=2000.0,
+                    bvalue=1.0/1000.0, vvalue=1.5, space_order=8):
     """
     For isotropic propagator build default model with 10m spacing,
         and 1.5 m/msec velocity
@@ -177,12 +177,15 @@ def defaultSetupIso(npad, shape, dtype,
     Return:
         dictionary of velocity, buoyancy, and wOverQ
         TimeAxis defining temporal sampling
-        SparseTimeFunction for source at (x=0, y=0, z=0)
-        SparseTimeFunction for line of receivers at (x=[0:nr-1], y=ny//2, z=1)
+        SparseTimeFunction for source located at [center x, center y, top z]
+        SparseTimeFunction for receiver line located at [line x, center y, center z)
     """
     d = 10.0
     origin = tuple([0.0 - d * npad for s in shape])
     extent = tuple([d * (s - 1) for s in shape])
+    
+    print("origin; ", origin)
+    print("extent; ", extent)
 
     # Define dimensions
     if len(shape) == 2:
@@ -197,12 +200,16 @@ def defaultSetupIso(npad, shape, dtype,
         grid = Grid(extent=extent, shape=shape, origin=origin,
                     dimensions=(x, y, z), dtype=dtype)
 
-    b = Function(name='b', grid=grid)
-    v = Function(name='v', grid=grid)
+    b = Function(name='b', grid=grid, space_order=space_order)
+    v = Function(name='v', grid=grid, space_order=space_order)
     b.data[:] = bvalue
     v.data[:] = vvalue
 
-    dt = critical_dt(v)
+    print("bvalue; ", bvalue)
+    print("vvalue; ", vvalue)
+
+    dt = dtype("%.6f" % (0.8 * critical_dt(v)))
+    print("dt; ", dt)
     time_axis = TimeAxis(start=tmin, stop=tmax, step=dt)
 
     nr = shape[0] - 2 * npad
@@ -210,18 +217,44 @@ def defaultSetupIso(npad, shape, dtype,
     rec = Receiver(name='rec', grid=grid, npoint=nr, time_range=time_axis)
 
     if len(shape) == 2:
-        src.coordinates.data[0, 0] = 0.0
-        src.coordinates.data[0, 1] = 0.0
+        src.coordinates.data[:, 0] = origin[0] + d * (shape[0] - 2 * npad) / 2
+        src.coordinates.data[:, 1] = d
 
         rec.coordinates.data[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
-        rec.coordinates.data[:, 1] = np.ones(nr, dtype=np.float32) * d
+        rec.coordinates.data[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
+
+        print("src X min/max; %+12.6f %+12.6f" %
+            (np.min(src.coordinates.data[:,0]), np.max(src.coordinates.data[:,0])))
+        print("src Z min/max; %+12.6f %+12.6f" %
+            (np.min(src.coordinates.data[:,1]), np.max(src.coordinates.data[:,1])))
+        print("rec X min/max; %+12.6f %+12.6f" %
+            (np.min(rec.coordinates.data[:,0]), np.max(rec.coordinates.data[:,0])))
+        print("rec Z min/max; %+12.6f %+12.6f" %
+            (np.min(rec.coordinates.data[:,1]), np.max(rec.coordinates.data[:,1])))
     else:
-        src.coordinates.data[0, 0] = 0.0
-        src.coordinates.data[0, 1] = 0.0
-        src.coordinates.data[0, 2] = 0.0
+        xcenter = origin[0] + extent[0] / 2
+        ycenter = origin[1] + extent[1] / 2
+        zcenter = origin[2] + extent[2] / 2
+
+        src.coordinates.data[:, 0] = origin[0] + d * (shape[0] - 2 * npad) / 2
+        src.coordinates.data[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
+        src.coordinates.data[:, 2] = d
 
         rec.coordinates.data[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
-        rec.coordinates.data[:, 1] = np.ones(nr, dtype=np.float32) * d * (shape[1]//2)
-        rec.coordinates.data[:, 2] = np.ones(nr, dtype=np.float32) * d
+        rec.coordinates.data[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
+        rec.coordinates.data[:, 2] = origin[2] + d * (shape[2] - 2 * npad) / 2
+
+        print("src X min/max; %+12.6f %+12.6f" %
+            (np.min(src.coordinates.data[:,0]), np.max(src.coordinates.data[:,0])))
+        print("src Y min/max; %+12.6f %+12.6f" %
+            (np.min(src.coordinates.data[:,1]), np.max(src.coordinates.data[:,1])))
+        print("src Z min/max; %+12.6f %+12.6f" %
+            (np.min(src.coordinates.data[:,2]), np.max(src.coordinates.data[:,2])))
+        print("rec X min/max; %+12.6f %+12.6f" %
+            (np.min(rec.coordinates.data[:,0]), np.max(rec.coordinates.data[:,0])))
+        print("rec Y min/max; %+12.6f %+12.6f" %
+            (np.min(rec.coordinates.data[:,1]), np.max(rec.coordinates.data[:,1])))
+        print("rec Z min/max; %+12.6f %+12.6f" %
+            (np.min(rec.coordinates.data[:,2]), np.max(rec.coordinates.data[:,2])))
 
     return b, v, time_axis, src, rec

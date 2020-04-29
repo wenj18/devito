@@ -55,3 +55,4 @@ These notebooks first implement and then test for correctness for three types of
 - [X] \Gamma --> P_r,P_s
 - [ ] Add checkpointing back to the iso wavesolver
 - [ ] Farfield similarity tests for correctness, ensure 10 wavelengths out that wavelet phase is preserved
+- [ ] Add memoized methods back to wavesolver.py

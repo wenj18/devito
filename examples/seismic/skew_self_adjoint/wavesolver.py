@@ -4,6 +4,10 @@ from examples.seismic import PointSource, Receiver
 from examples.seismic.skew_self_adjoint.utils import *
 from examples.seismic.skew_self_adjoint.operators import *
 
+# CHANGELOG
+#   2020.04.28
+#     - removed memoized functions: without self.geometry, would need to add
+#       self.fields for src, srca, rec, reca, ...
 
 class SSA_ISO_AcousticWaveSolver(object):
     """
@@ -37,7 +41,6 @@ class SSA_ISO_AcousticWaveSolver(object):
     space_order: int, optional
         Order of the spatial stencil discretisation. Defaults to 8.
     """
-
     def __init__(self, npad, qmin, qmax, omega, b, v, src, rec, time_axis,
                  space_order=8, **kwargs):
         self.npad = npad
@@ -65,38 +68,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         # initialize dictionary to store model parameters
         self.model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
-    # Note on use of memoized op_fwd, op_adj, op_jacobian_fwd, op_jacobian_adj:
-    #   For repeated calls these functions only do the heavy lifting of building the
-    #   Devito Operator if something 'impactful' changes in the symbolic representation.
-    @memoized_meth
-    def op_fwd(self, save=None):
-        """Cached operator for forward runs with buffered wavefield"""
-        return ISO_FwdOperator(self.model, self.src, self.rec,
-                               self.time_axis, space_order=self.space_order,
-                               save=save, **self._kwargs)
-
-    @memoized_meth
-    def op_adj(self):
-        """Cached operator for AdjOperator runs"""
-        return ISO_AdjOperator(self.model, self.src, self.rec,
-                               self.time_axis, space_order=self.space_order,
-                               save=None, **self._kwargs)
-
-    @memoized_meth
-    def op_jacobian_fwd(self):
-        """Cached operator for JacobianForward runs"""
-        return ISO_JacobianFwdOperator(self.model, self.src, self.rec,
-                                       self.time_axis, space_order=self.space_order,
-                                       save=None, **self._kwargs)
-
-    @memoized_meth
-    def op_jacobian_adj(self, save=True):
-        """Cached operator for JacobianAdjoint runs"""
-        return ISO_JacobianAdjOperator(self.model, self.rec,
-                                       self.time_axis, space_order=self.space_order,
-                                       save=save, **self._kwargs)
-
-    def forward(self, src=None, rec=None, b=None, v=None, wOverQ=None, u=None,
+    def forward(self, src, rec=None, b=None, v=None, wOverQ=None, u=None,
                 save=None, **kwargs):
         """
         Forward modeling function that creates the necessary
@@ -105,7 +77,7 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         Parameters
         ----------
-        src : SparseTimeFunction, optional, defaults to src at construction
+        src : SparseTimeFunction, required
             Time series data for the injected source term.
         rec : SparseTimeFunction, optional, defaults to new rec
             The interpolated receiver data.
@@ -124,8 +96,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         ----------
         Receiver time series data, TimeFunction wavefield u, and performance summary
         """
-        # Get src: src cant change, use self.src if not passed
-        src = src or self.src
+        # src is required
 
         # Get rec: rec can change, create new if not passed
         rec = rec or Receiver(name='rec', grid=self.v.grid,
@@ -148,12 +119,16 @@ class SSA_ISO_AcousticWaveSolver(object):
                               save=self.time_axis.num if save else None,
                               time_order=2, space_order=self.space_order)
 
-        # Execute operator, "splatting" the model dictionary entries
-#         op = self.op_fwd(save)
-#         f = open('ccode.c++', 'w')
-#         print(op.ccode, file=f)
-#         f.close()
-        summary = self.op_fwd(save).apply(**self.model, src=src, rec=rec, u=u, **kwargs)
+        # Build the operator and execute
+        op = ISO_FwdOperator(self.model, src, rec, self.time_axis, 
+                             space_order=self.space_order, save=save, **self._kwargs)
+
+        f = open("operator1.cpp", "w")
+        print(op.ccode, file=f)
+        f.close()
+
+        summary = op.apply(u=u, **kwargs)
+    
         return rec, u, summary
 
     def adjoint(self, rec, srca=None, b=None, v=None, wOverQ=None, ua=None,
@@ -185,7 +160,9 @@ class SSA_ISO_AcousticWaveSolver(object):
         Adjoint source time series data, wavefield TimeFunction ua,
         and performance summary
         """
-        # Get src: src can change, create new if not passed
+        # rec is required
+        
+        # Get srca: srca can change, create new if not passed
         srca = srca or PointSource(name='srca', grid=self.v.grid,
                                    time_range=self.time_axis,
                                    coordinates=self.src.coordinates)
@@ -206,8 +183,15 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 save=self.time_axis.num if save else None,
                                 time_order=2, space_order=self.space_order)
 
-        # Execute operator, "splatting" the model dictionary entries
-        summary = self.op_adj().apply(**self.model, srca=srca, rec=rec, u=ua, **kwargs)
+        # Build the operator and execute
+        op = ISO_AdjOperator(self.model, srca, rec, self.time_axis,
+                             space_order=self.space_order, save=None, **self._kwargs)
+
+        print(op)
+        print(op.arguments())
+        
+        summary = op.apply(u=ua, **kwargs)
+
         return srca, ua, summary
 
     def jacobian_forward(self, dm, src=None, rec=None, b=None, v=None, wOverQ=None,
@@ -271,10 +255,24 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 save=self.time_axis.num if save else None,
                                 time_order=2, space_order=self.space_order)
 
-        # Execute operator, "splatting" the model dictionary entries
+        # Build the operator and execute
+        op = ISO_JacobianFwdOperator(self.model, src, rec, self.time_axis,
+                                     space_order=self.space_order, save=None, **self._kwargs)
         summary = self.op_jacobian_fwd().apply(dm=dm, **self.model, src=src, rec=rec,
                                                u0=u0, du=du, **kwargs)
+
         return rec, u0, du, summary
+    
+    
+        op = ISO_FwdOperator(self.model, src, rec, self.time_axis, 
+                             space_order=self.space_order, save=save, **self._kwargs)
+
+        summary = op.apply(u=u, **kwargs)
+    
+        return rec, u, summary
+
+    
+    
 
     def jacobian_adjoint(self, rec, u0, b=None, v=None, wOverQ=None,
                          dm=None, du=None, save=None, **kwargs):
@@ -332,4 +330,9 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Execute operator, "splatting" the model dictionary entries
         summary = self.op_jacobian_adj(save).apply(dm=dm, **self.model, rec=rec,
                                                    u0=u0, du=du, **kwargs)
+        
+        return ISO_JacobianAdjOperator(self.model, self.rec,
+                                       self.time_axis, space_order=self.space_order,
+                                       save=save, **self._kwargs)
+
         return dm, u0, du, summary
