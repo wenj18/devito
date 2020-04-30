@@ -183,7 +183,7 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     # print("adjoint eqn;", eqn)
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
-    t = v.dimensions[0]
+    t = u.dimensions[0]
     rec_term = rec.inject(field=u.backward, expr=rec * t.spacing**2 * v**2 / b)
 
     # Create interpolation expression for the adjoint-source, extracting at p(t)
@@ -250,7 +250,7 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     # JKW: this is pretty cool, simultaneously solving for p0 and dp!
     # The 1st equation is derived in ssa_01_iso_implementation1.ipynb
     # The 2nd equation is derived in ssa_02_iso_implementation2.ipynb
-    t = v.dimensions[0]
+    t = u.dimensions[0]
     eqn1 = iso_stencil(u0, model, forward=True)
     eqn2 = iso_stencil(du, model, forward=True,
                        q=2 * b * dv * v**-2 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2))
@@ -317,7 +317,7 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     dv = Function(name="dv", grid=v.grid, space_order=space_order)
 
     # Time update equation
-    t = v.dimensions[0]
+    t = u.dimensions[0]
     eqn = iso_stencil(u0, model, forward=False)
     dv_update = Inc(dv, du * (2 * b * v**-3 *
                               (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2)))

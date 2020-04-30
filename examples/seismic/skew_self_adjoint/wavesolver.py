@@ -119,13 +119,10 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Build the operator and execute
         op = ISO_FwdOperator(model, src, rec, self.time_axis, 
                              space_order=self.space_order, save=save, **self._kwargs)
-
         # f = open("operator1.cpp", "w")
         # print(op.ccode, file=f)
         # f.close()
-
         summary = op.apply(u=u, **kwargs)
-    
         return rec, u, summary
 
     def adjoint(self, rec, src=None, b=None, v=None, wOverQ=None, u=None,
@@ -175,10 +172,6 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Make dictionary of the physical model properties
         model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
-        print("b min/max;      %+12.6f %+12.6f" % (np.min(b.data), np.max(b.data)))
-        print("v min/max;      %+12.6f %+12.6f" % (np.min(v.data), np.max(v.data)))
-        print("wOverQ min/max; %+12.6f %+12.6f" % (np.min(wOverQ.data), np.max(wOverQ.data)))
-
         # Create the adjoint wavefield if not provided
         u = u or TimeFunction(name='u', grid=self.v.grid,
                               save=self.time_axis.num if save else None,
@@ -187,15 +180,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Build the operator and execute
         op = ISO_AdjOperator(model, src, rec, self.time_axis,
                              space_order=self.space_order, save=save, **self._kwargs)
-
-#         print(op.ccode)
-#         print("\nop.args; ", op.args)
-#         print("\nop.arguments(); ", op.arguments())
-        
-        print("u before min/max; %+12.6e %+12.6e" % (np.min(u.data), np.max(u.data)))
         summary = op.apply(u=u, **kwargs)
-        print("u after  min/max; %+12.6e %+12.6e" % (np.min(u.data), np.max(u.data)))
-
         return src, u, summary
 
     def jacobian_forward(self, dm, src=None, rec=None, b=None, v=None, wOverQ=None,
