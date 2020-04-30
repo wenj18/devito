@@ -1,3 +1,4 @@
+import numpy as np
 from devito import Function, TimeFunction
 from devito.tools import memoized_meth
 from examples.seismic import PointSource, Receiver
@@ -6,8 +7,7 @@ from examples.seismic.skew_self_adjoint.operators import *
 
 # CHANGELOG
 #   2020.04.28
-#     - removed memoized functions: without self.geometry, would need to add
-#       self.fields for src, srca, rec, reca, ...
+#     - removed memoized functions
 
 class SSA_ISO_AcousticWaveSolver(object):
     """
@@ -65,9 +65,6 @@ class SSA_ISO_AcousticWaveSolver(object):
         setup_wOverQ(wOverQ, omega, qmin, qmax, npad)
         self.wOverQ = wOverQ
 
-        # initialize dictionary to store model parameters
-        self.model = {'b': b, 'v': v, 'wOverQ': wOverQ}
-
     def forward(self, src, rec=None, b=None, v=None, wOverQ=None, u=None,
                 save=None, **kwargs):
         """
@@ -112,7 +109,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         assert src.grid == rec.grid == b.grid == v.grid == wOverQ.grid
 
         # Make dictionary of the physical model properties
-        self.model.update(b=b, v=v, wOverQ=wOverQ)
+        model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
         # Create the wavefield if not provided
         u = u or TimeFunction(name='u', grid=self.v.grid,
@@ -120,18 +117,18 @@ class SSA_ISO_AcousticWaveSolver(object):
                               time_order=2, space_order=self.space_order)
 
         # Build the operator and execute
-        op = ISO_FwdOperator(self.model, src, rec, self.time_axis, 
+        op = ISO_FwdOperator(model, src, rec, self.time_axis, 
                              space_order=self.space_order, save=save, **self._kwargs)
 
-        f = open("operator1.cpp", "w")
-        print(op.ccode, file=f)
-        f.close()
+        # f = open("operator1.cpp", "w")
+        # print(op.ccode, file=f)
+        # f.close()
 
         summary = op.apply(u=u, **kwargs)
     
         return rec, u, summary
 
-    def adjoint(self, rec, srca=None, b=None, v=None, wOverQ=None, ua=None,
+    def adjoint(self, rec, src=None, b=None, v=None, wOverQ=None, u=None,
                 save=None, **kwargs):
         """
         Adjoint modeling function that creates the necessary
@@ -142,7 +139,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         ----------
         rec : SparseTimeFunction, required
             The interpolated receiver data to be injected
-        srca : SparseTimeFunction, optional, defaults to new srca
+        src : SparseTimeFunction, optional, defaults to new src
             Time series data for the adjoint source term.
         b : Function or float, optional, defaults to b at construction
             The time-constant buoyancy.
@@ -162,8 +159,8 @@ class SSA_ISO_AcousticWaveSolver(object):
         """
         # rec is required
         
-        # Get srca: srca can change, create new if not passed
-        srca = srca or PointSource(name='srca', grid=self.v.grid,
+        # Get src: src can change, create new if not passed
+        src = src or PointSource(name='src', grid=self.v.grid,
                                    time_range=self.time_axis,
                                    coordinates=self.src.coordinates)
 
@@ -172,27 +169,34 @@ class SSA_ISO_AcousticWaveSolver(object):
         v = v or self.v
         wOverQ = wOverQ or self.wOverQ
 
-        # ensure srca, rec, b, v, wOverQ all share the same underlying grid
-        assert srca.grid == rec.grid == b.grid == v.grid == wOverQ.grid
+        # ensure src, rec, b, v, wOverQ all share the same underlying grid
+        assert src.grid == rec.grid == b.grid == v.grid == wOverQ.grid
 
         # Make dictionary of the physical model properties
-        self.model.update(b=b, v=v, wOverQ=wOverQ)
+        model = {'b': b, 'v': v, 'wOverQ': wOverQ}
+
+        print("b min/max;      %+12.6f %+12.6f" % (np.min(b.data), np.max(b.data)))
+        print("v min/max;      %+12.6f %+12.6f" % (np.min(v.data), np.max(v.data)))
+        print("wOverQ min/max; %+12.6f %+12.6f" % (np.min(wOverQ.data), np.max(wOverQ.data)))
 
         # Create the adjoint wavefield if not provided
-        ua = ua or TimeFunction(name='ua', grid=self.v.grid,
-                                save=self.time_axis.num if save else None,
-                                time_order=2, space_order=self.space_order)
+        u = u or TimeFunction(name='u', grid=self.v.grid,
+                              save=self.time_axis.num if save else None,
+                              time_order=2, space_order=self.space_order)
 
         # Build the operator and execute
-        op = ISO_AdjOperator(self.model, srca, rec, self.time_axis,
-                             space_order=self.space_order, save=None, **self._kwargs)
+        op = ISO_AdjOperator(model, src, rec, self.time_axis,
+                             space_order=self.space_order, save=save, **self._kwargs)
 
-        print(op)
-        print(op.arguments())
+#         print(op.ccode)
+#         print("\nop.args; ", op.args)
+#         print("\nop.arguments(); ", op.arguments())
         
-        summary = op.apply(u=ua, **kwargs)
+        print("u before min/max; %+12.6e %+12.6e" % (np.min(u.data), np.max(u.data)))
+        summary = op.apply(u=u, **kwargs)
+        print("u after  min/max; %+12.6e %+12.6e" % (np.min(u.data), np.max(u.data)))
 
-        return srca, ua, summary
+        return src, u, summary
 
     def jacobian_forward(self, dm, src=None, rec=None, b=None, v=None, wOverQ=None,
                          u0=None, du=None, save=None, **kwargs):
@@ -244,7 +248,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         assert src.grid == rec.grid == b.grid == v.grid == wOverQ.grid
 
         # Make dictionary of the physical model properties
-        self.model.update(b=b, v=v, wOverQ=wOverQ)
+        model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
         # Create the wavefields if not provided
         u0 = u0 or TimeFunction(name='u0', grid=self.v.grid,
@@ -256,22 +260,13 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 time_order=2, space_order=self.space_order)
 
         # Build the operator and execute
-        op = ISO_JacobianFwdOperator(self.model, src, rec, self.time_axis,
-                                     space_order=self.space_order, save=None, **self._kwargs)
-        summary = self.op_jacobian_fwd().apply(dm=dm, **self.model, src=src, rec=rec,
-                                               u0=u0, du=du, **kwargs)
+        op = ISO_JacobianFwdOperator(model, src, rec, self.time_axis,
+                                     space_order=self.space_order, 
+                                     save=save, **self._kwargs)
+        
+        summary = self.op_jacobian_fwd().apply(dm=dm, u0=u0, du=du, **kwargs)
 
         return rec, u0, du, summary
-    
-    
-        op = ISO_FwdOperator(self.model, src, rec, self.time_axis, 
-                             space_order=self.space_order, save=save, **self._kwargs)
-
-        summary = op.apply(u=u, **kwargs)
-    
-        return rec, u, summary
-
-    
     
 
     def jacobian_adjoint(self, rec, u0, b=None, v=None, wOverQ=None,
@@ -320,7 +315,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         assert src.grid == rec.grid == b.grid == v.grid == wOverQ.grid
 
         # Make dictionary of the physical model properties
-        self.model.update(b=b, v=v, wOverQ=wOverQ)
+        model = {'b': b, 'v': v, 'wOverQ': wOverQ}
 
         # Create the perturbation wavefield if not provided
         du = du or TimeFunction(name='du', grid=self.v.grid,
@@ -328,11 +323,11 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 time_order=2, space_order=self.space_order)
 
         # Execute operator, "splatting" the model dictionary entries
-        summary = self.op_jacobian_adj(save).apply(dm=dm, **self.model, rec=rec,
-                                                   u0=u0, du=du, **kwargs)
         
-        return ISO_JacobianAdjOperator(self.model, self.rec,
-                                       self.time_axis, space_order=self.space_order,
+        return ISO_JacobianAdjOperator(model, self.rec, self.time_axis,
+                                       space_order=self.space_order,
                                        save=save, **self._kwargs)
+
+        summary = self.op_jacobian_adj(save).apply(dm=dm, u0=u0, du=du, **kwargs)
 
         return dm, u0, du, summary

@@ -37,7 +37,7 @@ class TestWavesolver(object):
         print("ns, nr; ", ns, nr)
         print(time_axis)
 
-        a = 2.5
+        a = np.random.rand()
         src1 = RickerSource(name='src1', grid=v.grid, f0=fpeak, npoint=1,
                             time_range=time_axis)
         src2 = RickerSource(name='src2', grid=v.grid, f0=fpeak, npoint=1,

@@ -47,12 +47,12 @@ These notebooks first implement and then test for correctness for three types of
 ```py.test -s testUtils.py```
 ## TODO
 - [x] Devito-esque equation version of setup_wOverQ
-- [ ] figure out if the JacobianAdjointOperator completely solves p0 first
+- [X] figure out if the JacobianAdjointOperator completely solves p0 first
 - [ ] figure out if can get time sampling from the SparseTimeFuntions src/rec
 - [ ] replace the conditional logic in the stencil with comprehension
-- [ ] s --> q in all equations
 - [X] p --> u in all equations
 - [X] \Gamma --> P_r,P_s
 - [ ] Add checkpointing back to the iso wavesolver
 - [ ] Farfield similarity tests for correctness, ensure 10 wavelengths out that wavelet phase is preserved
 - [ ] Add memoized methods back to wavesolver.py
+- [ ] Add ```ensureSanityOfFields``` methods for iso, vti, tti

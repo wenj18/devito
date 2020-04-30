@@ -39,8 +39,15 @@ def iso_stencil(field, model, **kwargs):
     wOverQ = model['wOverQ']
 
     # Define time step of pressure wavefield to be updated
-    field_next = field.forward if kwargs.get('forward', True) else field.backward
-    field_prev = field.backward if kwargs.get('forward', True) else field.forward
+    forward = kwargs.get('forward', True)
+    # print("iso_stencil -- forward; ", forward)
+
+    if forward:
+        field_next = field.forward
+        field_prev = field.backward
+    else:
+        field_next = field.backward
+        field_prev = field.forward
 
     # Get the source
     q = kwargs.get('q', 0)
@@ -53,16 +60,18 @@ def iso_stencil(field, model, **kwargs):
         t, x, z = field.dimensions
         eq_time_update = (t.spacing**2 * v**2 / b) * \
             ((b * field.dx(x0=x+x.spacing/2)).dx(x0=x-x.spacing/2) +
-             (b * field.dz(x0=z+z.spacing/2)).dz(x0=z-z.spacing/2) + q) - \
-            t.spacing * wOverQ * (field - field_prev) + 2 * field - field_prev
+             (b * field.dz(x0=z+z.spacing/2)).dz(x0=z-z.spacing/2) + q) + \
+            (2 - t.spacing * wOverQ) * field + \
+            (t.spacing * wOverQ - 1) * field_prev
 
     else:
         t, x, y, z = field.dimensions
         eq_time_update = (t.spacing**2 * v**2 / b) * \
             ((b * field.dx(x0=x+x.spacing/2)).dx(x0=x-x.spacing/2) +
              (b * field.dy(x0=y+y.spacing/2)).dy(x0=y-y.spacing/2) +
-             (b * field.dz(x0=z+z.spacing/2)).dz(x0=z-z.spacing/2) + q) - \
-            t.spacing * wOverQ * (field - field_prev) + 2 * field - field_prev
+             (b * field.dz(x0=z+z.spacing/2)).dz(x0=z-z.spacing/2) + q) + \
+            (2 - t.spacing * wOverQ) * field + \
+            (t.spacing * wOverQ - 1) * field_prev
 
     return [Eq(field_next, eq_time_update)]
 
@@ -94,11 +103,13 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     ----------
     The operator implementing forward modeling
     """
-    # Get the Functions for buoyancy, velocity
+    # Get the Functions for buoyancy, velocity, wOverQ
     assert 'b' in model, "model dictionary must contain key 'b'"
     assert 'v' in model, "model dictionary must contain key 'v'"
+    assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
     b = model['b']
     v = model['v']
+    wOverQ = model['wOverQ']
 
     # Create symbols for wavefield, source and receivers
     u = TimeFunction(name='u', grid=v.grid,
@@ -107,6 +118,7 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
 
     # Time update equation
     eqn = iso_stencil(u, model, forward=True)
+    # print("forward eqn;", eqn)
 
     # Construct expression to inject source values, injecting at p(t+dt)
     t = u.dimensions[0]
@@ -119,7 +131,7 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-#     print(spacing_map)
+    # print(spacing_map)
 
     return Operator(eqn + src_term + rec_term, subs=spacing_map,
                     name='ISO_FwdOperator', **kwargs)
@@ -153,11 +165,13 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     ----------
     The operator implementing adjoint modeling
     """
-    # Get the Functions for buoyancy, velocity
+    # Get the Functions for buoyancy, velocity, wOverQ
     assert 'b' in model, "model dictionary must contain key 'b'"
     assert 'v' in model, "model dictionary must contain key 'v'"
+    assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
     b = model['b']
     v = model['v']
+    wOverQ = model['wOverQ']
 
     # Create symbols for wavefield, source and receivers
     u = TimeFunction(name='u', grid=v.grid,
@@ -165,7 +179,8 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
                      time_order=2, space_order=space_order)
 
     # Time update equation
-    eqn = iso_stencil(u, model, forward="False")
+    eqn = iso_stencil(u, model, forward=False)
+    # print("adjoint eqn;", eqn)
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
     t = v.dimensions[0]
@@ -178,7 +193,7 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-#     print(spacing_map)
+    # print(spacing_map)
 
     return Operator(eqn + rec_term + src_term, subs=spacing_map,
                     name='ISO_AdjOperator', **kwargs)
@@ -212,7 +227,7 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     ----------
     The operator implementing Jacobian forward modeling
     """
-    # Get the Functions for buoyancy, velocity, and wOverQ
+    # Get the Functions for buoyancy, velocity, wOverQ
     assert 'b' in model, "model dictionary must contain key 'b'"
     assert 'v' in model, "model dictionary must contain key 'v'"
     assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
@@ -282,7 +297,7 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     ----------
     The operator implementing Jacobian adjoint modeling
     """
-    # Get the Functions for buoyancy, velocity, and wOverQ
+    # Get the Functions for buoyancy, velocity, wOverQ
     assert 'b' in model, "model dictionary must contain key 'b'"
     assert 'v' in model, "model dictionary must contain key 'v'"
     assert 'wOverQ' in model, "model dictionary must contain key 'wOverQ'"
