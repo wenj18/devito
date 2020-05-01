@@ -101,10 +101,10 @@ if testAdjointLinearity:
     src2.data[:] = src2.data[:] / rms2
     diff = src1.data - src2.data
 
-    print("rec1 min,max,rms; %+12.6e %+12.6e %+12.6e" % 
-        (np.min(rec1.data), np.max(rec1.data), np.sqrt(np.mean(rec1.data**2))))
-    print("rec2 min,max,rms; %+12.6e %+12.6e %+12.6e" % 
-        (np.min(rec2.data), np.max(rec2.data), np.sqrt(np.mean(rec2.data**2))))
+    print("src1 min,max,rms; %+12.6e %+12.6e %+12.6e" % 
+        (np.min(src1.data), np.max(src1.data), np.sqrt(np.mean(src1.data**2))))
+    print("src2 min,max,rms; %+12.6e %+12.6e %+12.6e" % 
+        (np.min(src2.data), np.max(src2.data), np.sqrt(np.mean(src2.data**2))))
     print("diff min,max,rms; %+12.6e %+12.6e %+12.6e" % 
         (np.min(diff), np.max(diff), np.sqrt(np.mean(diff**2))))
 
