@@ -85,8 +85,8 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     # report min/max output Q value
     q1, q2 = np.min(wOverQ.data), np.max(wOverQ.data)
     t2 = timer()
-    print("setup_wOverQ ran in %.4f seconds -- min/max w/Q values; %.6e %.6e"
-          % (t2-t1, q1, q2))
+#     print("setup_wOverQ ran in %.4f seconds -- min/max w/Q values; %.6e %.6e"
+#           % (t2-t1, q1, q2))
 
 
 def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):

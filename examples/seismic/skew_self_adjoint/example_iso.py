@@ -7,9 +7,9 @@ from examples.seismic.skew_self_adjoint import *
 # from matplotlib import cm
 
 configuration['language'] = 'openmp'
-configuration['log-level'] = 'ERROR'
-# configuration['log-level'] = 'DEBUG'
-# configuration['mpi'] = 1
+# configuration['log-level'] = 'ERROR'
+configuration['log-level'] = 'DEBUG'
+configuration['mpi'] = 1
 
 
 # shape = (601, 601, 601)
@@ -34,7 +34,6 @@ print("grid.shape;     ", v.grid.shape)
 print("grid.origin;    ", (v.grid.origin[0].data, v.grid.origin[1].data))
 print("grid.spacing;   ", v.grid.spacing)
 
-testForwardLinearity = False
 testForwardLinearity = True
 testAdjointLinearity = True
 

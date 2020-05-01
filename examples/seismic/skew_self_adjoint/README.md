@@ -56,3 +56,4 @@ These notebooks first implement and then test for correctness for three types of
 - [ ] Farfield similarity tests for correctness, ensure 10 wavelengths out that wavelet phase is preserved
 - [ ] Add memoized methods back to wavesolver.py
 - [ ] Add ```ensureSanityOfFields``` methods for iso, vti, tti
+- [ ] Add timing info via logging for the wOverQ setup, as in initialize_damp
