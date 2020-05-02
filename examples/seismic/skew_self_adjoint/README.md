@@ -45,3 +45,48 @@ These notebooks first implement and then test for correctness for three types of
 ## Running unit tests
 - if you would like to see stdout when running the tests, use
 ```py.test -c testUtils.py```
+
+## Some commands for performance testing thread scaling on AMD 7502
+
+Note: key argument to mpirun: ```-bind-to socket```
+
+#### No MPI
+```
+env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=40 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=48 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=56 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=64 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+```
+
+#### MPI 2 ranks, without OpenMP pinning variables
+```
+env OMP_NUM_THREADS=4  time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=8  time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=12 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=16 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=20 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=24 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=28 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=32 time mpirun -n 2 -bind-to socket python3 example_iso.py
+```
+
+#### MPI 2 ranks, with OpenMP pinning variables
+```
+env OMP_NUM_THREADS=4  OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=12 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=20 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=28 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+```
+
+env OMP_NUM_THREADS=32 time mpirun -n 2  -bind-to socket python3 example_iso.py >& mpi.02.txt
+env OMP_NUM_THREADS=16 time mpirun -n 4  -bind-to socket python3 example_iso.py >& mpi.04.txt
+env OMP_NUM_THREADS=8  time mpirun -n 8  -bind-to socket python3 example_iso.py >& mpi.08.txt
+env OMP_NUM_THREADS=4  time mpirun -n 16 -bind-to socket python3 example_iso.py >& mpi.16.txt
