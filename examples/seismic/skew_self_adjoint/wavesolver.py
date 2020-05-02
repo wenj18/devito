@@ -1,13 +1,9 @@
 import numpy as np
 from devito import Function, TimeFunction
-from devito.tools import memoized_meth
 from examples.seismic import PointSource, Receiver
 from examples.seismic.skew_self_adjoint.utils import *
 from examples.seismic.skew_self_adjoint.operators import *
 
-# CHANGELOG
-#   2020.04.28
-#     - removed memoized functions
 
 class SSA_ISO_AcousticWaveSolver(object):
     """
@@ -41,16 +37,16 @@ class SSA_ISO_AcousticWaveSolver(object):
     space_order: int, optional
         Order of the spatial stencil discretisation. Defaults to 8.
     """
-    def __init__(self, npad, qmin, qmax, omega, b, v, src, rec, time_axis,
-                 space_order=8, **kwargs):
+    def __init__(self, npad, qmin, qmax, omega, b, v, src_coords, rec_coords,
+                 time_axis, space_order=8, **kwargs):
         self.npad = npad
         self.qmin = qmin
         self.qmax = qmax
         self.omega = omega
         self.b = b
         self.v = v
-        self.src = src
-        self.rec = rec
+        self.src_coords = src_coords
+        self.rec_coords = rec_coords
         self.time_axis = time_axis
         self.space_order = space_order
 
@@ -98,7 +94,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Get rec: rec can change, create new if not passed
         rec = rec or Receiver(name='rec', grid=self.v.grid,
                               time_range=self.time_axis,
-                              coordinates=self.rec.coordinates)
+                              coordinates=self.rec_coords)
 
         # Get (b, v, wOverQ) from passed arguments or from (b, v, wOverQ) at construction
         b = b or self.b
@@ -117,7 +113,7 @@ class SSA_ISO_AcousticWaveSolver(object):
                               time_order=2, space_order=self.space_order)
 
         # Build the operator and execute
-        op = ISO_FwdOperator(model, src, rec, self.time_axis, 
+        op = ISO_FwdOperator(model, src, rec, self.time_axis,
                              space_order=self.space_order, save=save, **self._kwargs)
         # f = open("operator1.cpp", "w")
         # print(op.ccode, file=f)
@@ -155,11 +151,11 @@ class SSA_ISO_AcousticWaveSolver(object):
         and performance summary
         """
         # rec is required
-        
+
         # Get src: src can change, create new if not passed
         src = src or PointSource(name='src', grid=self.v.grid,
-                                   time_range=self.time_axis,
-                                   coordinates=self.src.coordinates)
+                                 time_range=self.time_axis,
+                                 coordinates=self.src_coords)
 
         # Get (b, v, wOverQ) from passed arguments or from (b, v, wOverQ) at construction
         b = b or self.b
@@ -222,7 +218,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         # Get rec: rec can change, create new if not passed
         rec = rec or Receiver(name='rec', grid=self.v.grid,
                               time_range=self.time_axis,
-                              coordinates=self.rec.coordinates)
+                              coordinates=self.rec_coords)
 
         # Get (b, v, wOverQ) from passed arguments or from (b, v, wOverQ) at construction
         b = b or self.b
@@ -246,13 +242,10 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         # Build the operator and execute
         op = ISO_JacobianFwdOperator(model, src, rec, self.time_axis,
-                                     space_order=self.space_order, 
+                                     space_order=self.space_order,
                                      save=save, **self._kwargs)
-        
-        summary = self.op_jacobian_fwd().apply(dm=dm, u0=u0, du=du, **kwargs)
-
+        summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
         return rec, u0, du, summary
-    
 
     def jacobian_adjoint(self, rec, u0, b=None, v=None, wOverQ=None,
                          dm=None, du=None, save=None, **kwargs):
@@ -308,11 +301,8 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 time_order=2, space_order=self.space_order)
 
         # Execute operator, "splatting" the model dictionary entries
-        
         return ISO_JacobianAdjOperator(model, self.rec, self.time_axis,
                                        space_order=self.space_order,
                                        save=save, **self._kwargs)
-
-        summary = self.op_jacobian_adj(save).apply(dm=dm, u0=u0, du=du, **kwargs)
-
+        summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
         return dm, u0, du, summary
