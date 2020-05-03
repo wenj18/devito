@@ -4,15 +4,9 @@ from examples.seismic import RickerSource, Receiver
 from examples.seismic.skew_self_adjoint import *
 
 configuration['language'] = 'openmp'
-# configuration['log-level'] = 'ERROR'
 configuration['log-level'] = 'DEBUG'
-# configuration['debug_compiler'] = 1
-# configuration['log-level'] = 'PERF'
-configuration['mpi'] = 1
-# configuration['mpi'] = 'full'
-# configuration['autotuning'] = ("aggressive", 'preemptive') 
-# configuration['autotuning'] = "aggressive"
 
+# shape = (881, 881, 371)
 shape = (601, 601, 601)
 # shape = (601, 601)
 dtype = np.float32

@@ -3,7 +3,7 @@
 ## These operators are contributed by Chevron Energy Technology Company (2020)
 
 These operators are based on simplfications of the systems presented in:
-<br>**Self-adjoint, energy-conserving second-order pseudoacoustic systems for VTI and TTI media for reverse time migration and full-waveform inversion** (2016)
+<br>**Self-adjoint, energy-conserving second-order pseudoacoustic systems for VTI and TTI media for reverse migration and full-waveform inversion** (2016)
 <br>Kenneth Bube, John Washbourne, Raymond Ergas, and Tamas Nemeth
 <br>SEG Technical Program Expanded Abstracts
 <br>https://library.seg.org/doi/10.1190/segam2016-13878451.1
@@ -52,41 +52,61 @@ Note: key argument to mpirun: ```-bind-to socket```
 
 #### No MPI
 ```
-env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=40 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=48 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=56 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
-env OMP_NUM_THREADS=64 OMP_PLACES=cores OMP_PROC_BIND=spread time python3 example_iso.py
+env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.08.txt
+env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.16.txt
+env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.24.txt
+env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.32.txt
+env OMP_NUM_THREADS=40 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.40.txt
+env OMP_NUM_THREADS=48 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.48.txt
+env OMP_NUM_THREADS=56 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.56.txt
+env OMP_NUM_THREADS=64 OMP_PLACES=cores OMP_PROC_BIND=spread python3 example_iso.py >& mpi.64.txt
 ```
 
-#### MPI 2 ranks, without OpenMP pinning variables
+#### MPI=full 2 ranks, without OpenMP pinning variables
 ```
-env OMP_NUM_THREADS=4  time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=8  time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=12 time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=16 time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=20 time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=24 time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=28 time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=32 time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=4  DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.08.txt
+env OMP_NUM_THREADS=8  DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.16.txt
+env OMP_NUM_THREADS=12 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.24.txt
+env OMP_NUM_THREADS=16 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.32.txt
+env OMP_NUM_THREADS=20 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.40.txt
+env OMP_NUM_THREADS=24 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.48.txt
+env OMP_NUM_THREADS=28 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.56.txt
+env OMP_NUM_THREADS=32 DEVITO_MPI="full" mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.64.txt
+```
+
+#### MPI=1 2 ranks, without OpenMP pinning variables
+```
+env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.08.txt
+env OMP_NUM_THREADS=8  DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.16.txt
+env OMP_NUM_THREADS=12 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.24.txt
+env OMP_NUM_THREADS=16 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.32.txt
+env OMP_NUM_THREADS=20 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.40.txt
+env OMP_NUM_THREADS=24 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.48.txt
+env OMP_NUM_THREADS=28 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.56.txt
+env OMP_NUM_THREADS=32 DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.64.txt
 ```
 
 #### MPI 2 ranks, with OpenMP pinning variables
 ```
-env OMP_NUM_THREADS=4  OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=12 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=20 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=28 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
-env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread time mpirun -n 2 -bind-to socket python3 example_iso.py
+env OMP_NUM_THREADS=4  OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.08.txt
+env OMP_NUM_THREADS=8  OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.16.txt
+env OMP_NUM_THREADS=12 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.24.txt
+env OMP_NUM_THREADS=16 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.32.txt
+env OMP_NUM_THREADS=20 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.40.txt
+env OMP_NUM_THREADS=24 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.48.txt
+env OMP_NUM_THREADS=28 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.56.txt
+env OMP_NUM_THREADS=32 OMP_PLACES=cores OMP_PROC_BIND=spread DEVITO_MPI=1 mpirun -n 2 -bind-to socket python3 example_iso.py >& mpi.64.txt
 ```
 
-env OMP_NUM_THREADS=32 time mpirun -n 2  -bind-to socket python3 example_iso.py >& mpi.02.txt
-env OMP_NUM_THREADS=16 time mpirun -n 4  -bind-to socket python3 example_iso.py >& mpi.04.txt
-env OMP_NUM_THREADS=8  time mpirun -n 8  -bind-to socket python3 example_iso.py >& mpi.08.txt
-env OMP_NUM_THREADS=4  time mpirun -n 16 -bind-to socket python3 example_iso.py >& mpi.16.txt
+env OMP_NUM_THREADS=64 DEVITO_MPI=1 mpirun -n 1  -bind-to socket python3 example_mpi.py >& mpi.01.txt
+env OMP_NUM_THREADS=32 DEVITO_MPI=1 mpirun -n 2  -bind-to socket python3 example_mpi.py >& mpi.02.txt
+env OMP_NUM_THREADS=16 DEVITO_MPI=1 mpirun -n 4  -bind-to socket python3 example_mpi.py >& mpi.04.txt
+env OMP_NUM_THREADS=8  DEVITO_MPI=1 mpirun -n 8  -bind-to socket python3 example_mpi.py >& mpi.08.txt
+env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 16 -bind-to socket python3 example_mpi.py >& mpi.16.txt
+
+env OMP_NUM_THREADS=64 DEVITO_MPI=1 mpirun -n 1  -bind-to socket python3 example_mpi.py >& mpi.01.txt
+env OMP_NUM_THREADS=32 DEVITO_MPI=1 mpirun -n 2  -bind-to socket python3 example_mpi.py >& mpi.02.txt
+env OMP_NUM_THREADS=16 DEVITO_MPI=1 mpirun -n 4  -bind-to socket python3 example_mpi.py >& mpi.04.txt
+env OMP_NUM_THREADS=8  DEVITO_MPI=1 mpirun -n 8  -bind-to socket python3 example_mpi.py >& mpi.08.txt
+env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 12 -bind-to socket python3 example_mpi.py >& mpi.12.txt
+env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 16 -bind-to socket python3 example_mpi.py >& mpi.16.txt
