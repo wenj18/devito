@@ -24,16 +24,16 @@ set xsize1 = 12
 set ysize1 = 8
 set size   = 8p
 
-set xmin   = (  0 )
-set xmax   = ( 17 )
-set dx     = (  1 )
+set xmin   = ( -1 )
+set xmax   = ( 31 )
+set dx     = (  4 )
 set ymin   = (  0.00 )
 set ymax   = (  3.75 )
 set dy     = (  0.25 )
 echo "xmin,xmax,dx; ${xmin} ${xmax} ${dx}"
 echo "ymin,ymax,dy; ${ymin} ${ymax} ${dy}"
 
-set title  = ( "Devito on AMD 7502" )
+set title  = ( "Devito on Azure HBv_120" )
 set xtitle = ( "Number of MPI ranks" )
 set ytitle = ( "Mcells/sec" )
 
@@ -51,13 +51,20 @@ paste plot_mpi*txt
 
 psbasemap -K ${rscale} "-B${dx}:${xtitle}:/${dy}:${ytitle}::.${title}:WeSn" > $ps
 
-paste plot_mpi*txt | psxy -O -K ${rscale} -W2.0p,${blk} >> $ps
-paste plot_mpi*txt | psxy -O -K ${rscale} -W2.0p,${blk} -Sc0.4 >> $ps
+cat run.mpi1.txt | sed -e "s/mpi.//g" | sed -e "s/.txt//" | awk '{ print $1, $4 }' 
+
+cat run.mpi1.txt | sed -e "s/mpi.//g" | sed -e "s/.txt://" | awk '{ print $1, $4 }' | psxy -O -K ${rscale} -W2.0p,${red} >> $ps
+cat run.mpi1.txt | sed -e "s/mpi.//g" | sed -e "s/.txt://" | awk '{ print $1, $4 }' | psxy -O -K ${rscale} -W2.0p,${red} -Sc0.4 >> $ps
+
+cat run.mpifull.txt | sed -e "s/mpi.//g" | sed -e "s/.txt://" | awk '{ print $1, $4 }' | psxy -O -K ${rscale} -W2.0p,${blu} >> $ps
+cat run.mpifull.txt | sed -e "s/mpi.//g" | sed -e "s/.txt://" | awk '{ print $1, $4 }' | psxy -O -K ${rscale} -W2.0p,${blu} -Sc0.4 >> $ps
 
 /bin/rm -rf t.legend
 echo "N 1.25 " >> t.legend
-echo "C $blk" >> t.legend
-echo "L 18 Courier-Bold L \ [Devito MPI ranks]" >> t.legend
+echo "C $red" >> t.legend
+echo "L 18 Courier-Bold L \ DEVITO_MPI=1" >> t.legend
+echo "C $blu" >> t.legend
+echo "L 18 Courier-Bold L \ DEVITO_MPI=full" >> t.legend
 pslegend t.legend -O -K $rscale -Fg+255 -Dx0.05i/7.65i+w2i/0.2i >> $ps
 /bin/rm -rf t.legend 
 

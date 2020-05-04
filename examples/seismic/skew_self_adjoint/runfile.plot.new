@@ -49,57 +49,59 @@ set label  = ( "2 numa nodes" )
 /bin/rm -rf ${png} ${ps} 
 psbasemap -K ${rscale} "-B${dx}:${xtitle}:/${dy}:${ytitle}::.${title}:WeSn" > $ps
 
-set types = ( 601a 601b 881a )
+set types = ( 601.mpi1 601.mpifull 881.mpi1 881.mpifull )
 foreach type ( ${types} )
-    grep GPts ${type}/mpi.*txt | grep Achiev | sort -n | uniq | cut -d "." -f 2 > threads.x.${type}.txt
+    echo " "
+    ls -d ${type}/mpi.*txt
+    grep GPts ${type}/mpi.*txt | grep Achiev | sort -n | uniq | cut -d "." -f 3 > threads.x.${type}.txt
     grep GPts ${type}/mpi.*txt | grep Achiev | sort -n | uniq | cut -d " " -f 5 > threads.y.${type}.txt
     echo " " 
     paste threads.x.${type}.txt threads.y.${type}.txt 
 end
 
-set size = 8p
+set size = 6p
 
-paste threads.x.601a.txt threads.y.601a.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${red} >> $ps
-paste threads.x.601a.txt threads.y.601a.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${red} -Sc${size} -G${red} >> $ps
+paste threads.x.601.mpi1.txt threads.y.601.mpi1.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${red} >> $ps
+paste threads.x.601.mpi1.txt threads.y.601.mpi1.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${red} -Sc${size} -G${red} >> $ps
 
-paste threads.x.601b.txt threads.y.601b.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${org} >> $ps
-paste threads.x.601b.txt threads.y.601b.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${org} -Sc${size} -G${org} >> $ps
+paste threads.x.601.mpifull.txt threads.y.601.mpifull.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${grn} >> $ps
+paste threads.x.601.mpifull.txt threads.y.601.mpifull.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${grn} -Sc${size} -G${grn} >> $ps
 
-paste threads.x.881a.txt threads.y.881a.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${blk} >> $ps
-paste threads.x.881a.txt threads.y.881a.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${blk} -Sc${size} -G${blk} >> $ps
+paste threads.x.881.mpi1.txt threads.y.881.mpi1.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${blu} >> $ps
+paste threads.x.881.mpi1.txt threads.y.881.mpi1.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${blu} -Sc${size} -G${blu} >> $ps
+
+paste threads.x.881.mpifull.txt threads.y.881.mpifull.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W2.0p,${blk} >> $ps
+paste threads.x.881.mpifull.txt threads.y.881.mpifull.txt | awk '{ print $1, $2 }' | psxy -O -K ${rscale} -W1.0p,${blk} -Sc${size} -G${blk} >> $ps
 
 set cvx_601 = ( "/data/esdrd/wask/advance/R5000.10.0v6/SeisSpace.cvxfwilib/test/time_domain/tmp.3d.n64.compare.gcc7.3.0.iso.txt" )
 set cvx_881 = ( "/data/esdrd/wask/advance/R5000.10.0v6/SeisSpace.cvxfwilib/test/time_domain/tmp.3d.n64.897,897,387.gcc7.3.0.iso.txt " )
 
-tail -n +2 ${cvx_601} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W2.0p,${grn} >> $ps
-tail -n +2 ${cvx_601} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W1.0p,${grn} -Sc${size} -G${grn} >> $ps
+tail -n +2 ${cvx_601} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W2.0p,${pur} >> $ps
+tail -n +2 ${cvx_601} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W1.0p,${pur} -Sc${size} -G${pur} >> $ps
 
-tail -n +2 ${cvx_881} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W2.0p,${blu} >> $ps
-tail -n +2 ${cvx_881} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W1.0p,${blu} -Sc${size} -G${blu} >> $ps
+tail -n +2 ${cvx_881} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W2.0p,${gra} >> $ps
+tail -n +2 ${cvx_881} | awk '{ print $1, $2/1000 }' | psxy -O -K ${rscale} -W1.0p,${gra} -Sc${size} -G${gra} >> $ps
 
-set max_devito_601a = ( `cat threads.y.601a.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
-set max_devito_601b = ( `cat threads.y.601b.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
-set max_devito_881a = ( `cat threads.y.881a.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
-set max_cvx_601     = ( `cat ${cvx_601} | awk '{ printf "%.2f\n", $2/1000 }' | sort -n | tail -n 1` )
-set max_cvx_881     = ( `cat ${cvx_881} | awk '{ printf "%.2f\n", $2/1000 }' | sort -n | tail -n 1` )
-
-echo "max_devito_601a; $max_devito_601a"
-echo "max_devito_601b; $max_devito_601b"
-echo "max_devito_881a; $max_devito_881a"
-echo "max_cvx_601;     $max_cvx_601"
-echo "max_cvx_881;     $max_cvx_881"
+set max_devito_601_mpi1 = ( `cat threads.y.601.mpi1.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
+set max_devito_601_mpif = ( `cat threads.y.601.mpifull.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
+set max_devito_881_mpi1 = ( `cat threads.y.881.mpi1.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
+set max_devito_881_mpif = ( `cat threads.y.881.mpifull.txt | awk '{ printf "%.2f\n", $1 }' | sort -n | tail -n 1` )
+set max_cvx_601         = ( `cat ${cvx_601} | awk '{ printf "%.2f\n", $2/1000 }' | sort -n | tail -n 1` )
+set max_cvx_881         = ( `cat ${cvx_881} | awk '{ printf "%.2f\n", $2/1000 }' | sort -n | tail -n 1` )
 
 /bin/rm -rf t.legend
 echo "N 1.33 " >> t.legend
 echo "C $red" >> t.legend
-echo "L 16 Courier-Bold L \ ${max_devito_601a} GPts/s (601,601,601) Devito MPI=1    -- no optimal cache blocking" >> t.legend
-echo "C $org" >> t.legend
-echo "L 16 Courier-Bold L \ ${max_devito_601b} GPts/s (601,601,601) Devito MPI=full -- no optimal cache blocking" >> t.legend
-echo "C $blk" >> t.legend
-echo "L 16 Courier-Bold L \ ${max_devito_881a} GPts/s (881,881,371) Devito MPI=1    -- no optimal cache blocking" >> t.legend
-echo "C $blu" >> t.legend
-echo "L 16 Courier-Bold L \ ${max_cvx_601} GPts/s (601,601,601) CVX             -- no optimal cache blocking" >> t.legend
+echo "L 16 Courier-Bold L \ ${max_devito_601_mpi1} GPts/s (601,601,601) Devito MPI=1    -- no optimal cache blocking" >> t.legend
 echo "C $grn" >> t.legend
+echo "L 16 Courier-Bold L \ ${max_devito_601_mpif} GPts/s (601,601,601) Devito MPI=full -- no optimal cache blocking" >> t.legend
+echo "C $blu" >> t.legend
+echo "L 16 Courier-Bold L \ ${max_devito_881_mpi1} GPts/s (881,881,371) Devito MPI=1    -- no optimal cache blocking" >> t.legend
+echo "C $blk" >> t.legend
+echo "L 16 Courier-Bold L \ ${max_devito_881_mpif} GPts/s (881,881,371) Devito MPI=full -- no optimal cache blocking" >> t.legend
+echo "C $pur" >> t.legend
+echo "L 16 Courier-Bold L \ ${max_cvx_601} GPts/s (601,601,601) CVX             -- no optimal cache blocking" >> t.legend
+echo "C $gra" >> t.legend
 echo "L 16 Courier-Bold L \ ${max_cvx_881} GPts/s (881,881,371) CVX             -- no optimal cache blocking" >> t.legend
 pslegend t.legend -O -K $rscale -Fg+255 -Dx0.025i/7.75i+w2i/0.2i >> $ps
 /bin/rm -rf t.legend 

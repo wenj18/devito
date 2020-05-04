@@ -6,8 +6,8 @@ from examples.seismic.skew_self_adjoint import *
 configuration['language'] = 'openmp'
 configuration['log-level'] = 'DEBUG'
 
-# shape = (881, 881, 371)
-shape = (601, 601, 601)
+shape = (881, 881, 371)
+# shape = (601, 601, 601)
 # shape = (601, 601)
 dtype = np.float32
 # dtype = np.float64
