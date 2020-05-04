@@ -66,20 +66,23 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     pos = Min(1, Min(*[Min(d - d.symbolic_min, d.symbolic_max - d)
                        for d in wOverQ.dimensions]) / npad)
     val = exp(lqmin + pos * (lqmax - lqmin))
-    eqn = Eq(wOverQ, val)
 
-    Operator([eqn], name='Initialize_wOverQ_Operator')()
+    # 2020.05.04 currently does not support spatial smoothing of the Q field
+    # due to MPI weirdness
+    eqn1 = Eq(wOverQ, w / val)
+    Operator([eqn1], name='WOverQ_Operator')()
 
-    # If we apply the smoother, we must renormalize output to [qmin,qmax]
-    if sigma > 0:
-        print("sigma=", sigma)
-        smooth = gaussian_smooth(wOverQ.data, sigma=sigma)
-        smin, smax = np.min(smooth), np.max(smooth)
-        smooth[:] = qmin + (qmax - qmin) * (smooth - smin) / (smax - smin)
-        wOverQ.data[:] = smooth
-
-    wOverQ.data[:] = w / wOverQ.data[:]
-
+#     eqn1 = Eq(wOverQ, val)
+#     Operator([eqn1], name='WOverQ_Operator_init')()
+#     # If we apply the smoother, we must renormalize output to [qmin,qmax]
+#     if sigma > 0:
+#         print("sigma=", sigma)
+#         smooth = gaussian_smooth(wOverQ.data, sigma=sigma)
+#         smin, smax = np.min(smooth), np.max(smooth)
+#         smooth[:] = qmin + (qmax - qmin) * (smooth - smin) / (smax - smin)
+#         wOverQ.data[:] = smooth
+#     eqn2 = Eq(wOverQ, w / wOverQ)
+#     Operator([eqn2], name='WOverQ_Operator_recip')()
 
 def setup_wOverQ_numpy(wOverQ, w, qmin, qmax, npad, sigma=0):
     """
@@ -211,5 +214,9 @@ def defaultSetupIso(npad, shape, dtype,
         rec_coords[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
         rec_coords[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
         rec_coords[:, 2] = origin[2] + d * (shape[2] - 2 * npad) / 2
+
+#         for kr in range(nr):
+#             print("kr,n,rx,ry,rz; %5d %5d %+12.6f %+12.6f %+12.6f" %
+#                   (kr, nr, rec_coords[kr, 0], rec_coords[kr, 1], rec_coords[kr, 2]))
 
     return b, v, time_axis, src_coords, rec_coords

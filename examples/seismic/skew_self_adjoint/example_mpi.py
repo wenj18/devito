@@ -8,7 +8,7 @@ configuration['language'] = 'openmp'
 configuration['log-level'] = 'DEBUG'
 
 # Constants
-nx, ny, nz = 251, 251, 251
+nx, ny, nz = 889, 889, 379
 shape = (nx, ny, nz)
 space_order = 8
 d = 10.0

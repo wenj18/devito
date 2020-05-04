@@ -6,11 +6,9 @@ from examples.seismic.skew_self_adjoint import *
 configuration['language'] = 'openmp'
 configuration['log-level'] = 'DEBUG'
 
-shape = (881, 881, 371)
-# shape = (601, 601, 601)
-# shape = (601, 601)
+nx, ny, nz = 889, 889, 379
+shape = (nx, ny, nz)
 dtype = np.float32
-# dtype = np.float64
 npad = 20
 qmin = 0.1
 qmax = 1000.0
@@ -31,6 +29,8 @@ nr = rec_coords.shape[0]
 print(time_axis)
 print("ns, nr;         ", ns, nr)
 print("grid.shape;     ", v.grid.shape)
+print("b.shape;        ", b.grid.shape)
+print("v.shape;        ", v.grid.shape)
 print("grid.origin;    ", (v.grid.origin[0].data, v.grid.origin[1].data))
 print("grid.spacing;   ", v.grid.spacing)
 
