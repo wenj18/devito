@@ -179,7 +179,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         summary = op.apply(u=u, **kwargs)
         return src, u, summary
 
-    def jacobian_forward(self, dm, src=None, rec=None, b=None, v=None, wOverQ=None,
+    def jacobian_forward(self, dm, src, rec=None, b=None, v=None, wOverQ=None,
                          u0=None, du=None, save=None, **kwargs):
         """
         Linearized JacobianForward modeling function that creates the necessary
@@ -190,7 +190,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         ----------
         dm : Function or float, required
             The perturbation to the velocity model.
-        src : SparseTimeFunction, optional, defaults to src at construction
+        src : SparseTimeFunction, required
             Time series data for the injected source term.
         rec : SparseTimeFunction, optional, defaults to new rec
             The interpolated receiver data.
@@ -212,8 +212,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         Receiver time series data rec, TimeFunction background wavefield u0,
         TimeFunction perturbation wavefield du, and performance summary
         """
-        # Get src: src cant change, use self.src if not passed
-        src = src or self.src
+        # src is required
 
         # Get rec: rec can change, create new if not passed
         rec = rec or Receiver(name='rec', grid=self.v.grid,
@@ -261,8 +260,6 @@ class SSA_ISO_AcousticWaveSolver(object):
             The interpolated receiver data to be injected.
         u0 : Function or float, required, (created with save=True)
             Stores the computed background wavefield.
-        src : SparseTimeFunction, optional, defaults to src at construction
-            Time series data for the injected source term.
         b : Function or float, optional, defaults to b at construction
             The time-constant buoyancy.
         v : Function or float, optional, defaults to v at construction
@@ -290,8 +287,8 @@ class SSA_ISO_AcousticWaveSolver(object):
         v = v or self.v
         wOverQ = wOverQ or self.wOverQ
 
-        # ensure src, rec, b, v, wOverQ all share the same underlying grid
-        assert src.grid == rec.grid == b.grid == v.grid == wOverQ.grid
+        # ensure rec, b, v, wOverQ all share the same underlying grid
+        assert rec.grid == b.grid == v.grid == wOverQ.grid
 
         # Make dictionary of the physical model properties
         model = {'b': b, 'v': v, 'wOverQ': wOverQ}
@@ -302,8 +299,16 @@ class SSA_ISO_AcousticWaveSolver(object):
                                 time_order=2, space_order=self.space_order)
 
         # Execute operator, "splatting" the model dictionary entries
-        return ISO_JacobianAdjOperator(model, self.rec, self.time_axis,
+        op = ISO_JacobianAdjOperator(model, rec, self.time_axis,
                                        space_order=self.space_order,
                                        save=save, **self._kwargs)
+        print("")
+        print(op.args)
+
+        print("")
         summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
+        
+        print("")
+        print(summary)
+
         return dm, u0, du, summary

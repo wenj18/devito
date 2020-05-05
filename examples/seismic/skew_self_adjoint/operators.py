@@ -317,10 +317,16 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     dm = Function(name="dm", grid=v.grid, space_order=space_order)
 
     # Time update equation
-    t = u.dimensions[0]
+    t = u0.dimensions[0]
     eqn = iso_stencil(u0, model, forward=False)
+    
     dm_update = Inc(dm, du * (2 * b * v**-3 *
                               (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2)))
+
+    print("")
+    print(eqn)
+    print("")
+    print(dm_update)
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
     rec_term = rec.inject(field=du.backward, expr=rec * t.spacing**2 * v**2 / b)
@@ -329,7 +335,7 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-#     print(spacing_map)
+    print(spacing_map)
 
     return Operator(eqn + rec_term + [dm_update], subs=spacing_map,
                     name='ISO_JacobianAdjOperator', **kwargs)

@@ -59,7 +59,15 @@ These notebooks first implement and then test for correctness for three types of
 - [ ] Add ensureSanityOfFields methods for iso, vti, tti
 - [ ] Add timing info via logging for the wOverQ setup, as in initialize_damp
 - [ ] Add smoother back to setup_WOverQ method
- 
+- [ ] Correctness tests
+  - [ ] Analytic response in the far field
+  - [X] Modeling operator linearity test, with respect to source
+  - [X] Modeling operator adjoint test, with respect to source
+  - [X] Nonlinear operator linearization test, with respect to model/data
+  - [ ] Jacobian operator linearity test, with respect to model/data
+  - [ ] Jacobian operator adjoint test, with respect to model/data
+  - [ ] Skew symmetry test for shifted derivatives
+
 ## Some commands for performance testing thread scaling on AMD 7502
 ```
 env OMP_PLACES=cores OMP_PROC_BIND=spread 
