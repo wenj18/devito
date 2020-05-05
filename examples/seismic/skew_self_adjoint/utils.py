@@ -68,7 +68,7 @@ def setup_wOverQ(wOverQ, w, qmin, qmax, npad, sigma=0):
     val = exp(lqmin + pos * (lqmax - lqmin))
 
     # 2020.05.04 currently does not support spatial smoothing of the Q field
-    # due to MPI weirdness
+    # due to MPI weirdness in reassignment of the numpy array 
     eqn1 = Eq(wOverQ, w / val)
     Operator([eqn1], name='WOverQ_Operator')()
 

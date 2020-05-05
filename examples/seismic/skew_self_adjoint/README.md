@@ -46,6 +46,20 @@ These notebooks first implement and then test for correctness for three types of
 - if you would like to see stdout when running the tests, use
 ```py.test -c testUtils.py```
 
+## TODO
+- [ ] Devito-esque equation version of setup_wOverQ
+- [ ] figure out if the JacobianAdjointOperator completely solves p0 first
+- [ ] figure out if can get time sampling from the SparseTimeFuntions src/rec
+- [ ] replace the conditional logic in the stencil with comprehension
+- [ ] p --> u in all equations
+- [ ] \Gamma --> P_r,P_s
+- [ ] Add checkpointing back to the iso wavesolver
+- [ ] Farfield similarity tests for correctness, ensure 10 wavelengths out that wavelet phase is preserved
+- [ ] Add memoized methods back to wavesolver.py
+- [ ] Add ensureSanityOfFields methods for iso, vti, tti
+- [ ] Add timing info via logging for the wOverQ setup, as in initialize_damp
+- [ ] Add smoother back to setup_WOverQ method
+ 
 ## Some commands for performance testing thread scaling on AMD 7502
 ```
 env OMP_PLACES=cores OMP_PROC_BIND=spread 
@@ -86,6 +100,18 @@ env OMP_NUM_THREADS=5  DEVITO_MPI=1 mpirun -n 12 -prepend-pattern "%r " -bind-to
 env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 14 -prepend-pattern "%r " -bind-to core:16 python3 example_iso.py >& mpi.14.txt
 env OMP_NUM_THREADS=4  DEVITO_MPI=1 mpirun -n 16 -prepend-pattern "%r " -bind-to core:16 python3 example_iso.py >& mpi.16.txt
 
+# 7742
+env OMP_NUM_THREADS=120 DEVITO_MPI=1 mpirun -n 1  -bind-to core:120 python3 example_iso.py >& mpi.01.txt
+env OMP_NUM_THREADS=60  DEVITO_MPI=1 mpirun -n 2  -bind-to core:60  python3 example_iso.py >& mpi.02.txt
+env OMP_NUM_THREADS=30  DEVITO_MPI=1 mpirun -n 4  -bind-to core:30  python3 example_iso.py >& mpi.04.txt
+env OMP_NUM_THREADS=24  DEVITO_MPI=1 mpirun -n 5  -bind-to core:24  python3 example_iso.py >& mpi.05.txt
+env OMP_NUM_THREADS=20  DEVITO_MPI=1 mpirun -n 6  -bind-to core:20  python3 example_iso.py >& mpi.06.txt
+env OMP_NUM_THREADS=12  DEVITO_MPI=1 mpirun -n 10 -bind-to core:12  python3 example_iso.py >& mpi.10.txt
+env OMP_NUM_THREADS=15  DEVITO_MPI=1 mpirun -n 15 -bind-to core:8   python3 example_iso.py >& mpi.15.txt
+env OMP_NUM_THREADS=30  DEVITO_MPI=1 mpirun -n 30 -bind-to core:4   python3 example_iso.py >& mpi.30.txt
+
+# 7502
+env OMP_NUM_THREADS=32 DEVITO_MPI=1 mpirun -n 2  -bind-to core:32 python3 example_iso.py >& mpi.02.txt
 env OMP_NUM_THREADS=32 DEVITO_MPI=1 mpirun -n 2  -bind-to core:32 python3 example_iso.py >& mpi.02.txt
 env OMP_NUM_THREADS=16 DEVITO_MPI=1 mpirun -n 4  -bind-to core:16 python3 example_iso.py >& mpi.04.txt
 env OMP_NUM_THREADS=10 DEVITO_MPI=1 mpirun -n 6  -bind-to core:10 python3 example_iso.py >& mpi.06.txt
