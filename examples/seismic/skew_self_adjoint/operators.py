@@ -40,7 +40,6 @@ def iso_stencil(field, model, **kwargs):
 
     # Define time step of pressure wavefield to be updated
     forward = kwargs.get('forward', True)
-    # print("iso_stencil -- forward; ", forward)
 
     if forward:
         field_next = field.forward
@@ -118,7 +117,6 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
 
     # Time update equation
     eqn = iso_stencil(u, model, forward=True)
-    # print("forward eqn;", eqn)
 
     # Construct expression to inject source values, injecting at p(t+dt)
     t = u.dimensions[0]
@@ -131,7 +129,6 @@ def ISO_FwdOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-    # print(spacing_map)
 
     return Operator(eqn + src_term + rec_term, subs=spacing_map,
                     name='ISO_FwdOperator', **kwargs)
@@ -180,7 +177,6 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
 
     # Time update equation
     eqn = iso_stencil(u, model, forward=False)
-    # print("adjoint eqn;", eqn)
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
     t = u.dimensions[0]
@@ -193,7 +189,6 @@ def ISO_AdjOperator(model, src, rec, time_axis, space_order=8, save=False, **kwa
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-    # print(spacing_map)
 
     return Operator(eqn + rec_term + src_term, subs=spacing_map,
                     name='ISO_AdjOperator', **kwargs)
@@ -265,7 +260,6 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-#     print(spacing_map)
 
     return Operator(eqn1 + src_term + eqn2 + rec_term, subs=spacing_map,
                     name='ISO_JacobianFwdOperator', **kwargs)
@@ -318,15 +312,9 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
 
     # Time update equation
     t = u0.dimensions[0]
-    eqn = iso_stencil(u0, model, forward=False)
-    
-    dm_update = Inc(dm, du * (2 * b * v**-3 *
-                              (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2)))
-
-    print("")
-    print(eqn)
-    print("")
-    print(dm_update)
+    eqn = iso_stencil(du, model, forward=False)
+    dm_update = Eq(dm, dm +
+                   du * (2 * b * v**-3 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2)))
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
     rec_term = rec.inject(field=du.backward, expr=rec * t.spacing**2 * v**2 / b)
@@ -335,7 +323,6 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     dt = time_axis.step
     spacing_map = v.grid.spacing_map
     spacing_map.update({t.spacing: dt})
-    print(spacing_map)
 
     return Operator(eqn + rec_term + [dm_update], subs=spacing_map,
                     name='ISO_JacobianAdjOperator', **kwargs)

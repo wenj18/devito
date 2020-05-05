@@ -300,15 +300,7 @@ class SSA_ISO_AcousticWaveSolver(object):
 
         # Execute operator, "splatting" the model dictionary entries
         op = ISO_JacobianAdjOperator(model, rec, self.time_axis,
-                                       space_order=self.space_order,
-                                       save=save, **self._kwargs)
-        print("")
-        print(op.args)
-
-        print("")
+                                     space_order=self.space_order,
+                                     save=save, **self._kwargs)
         summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
-        
-        print("")
-        print(summary)
-
         return dm, u0, du, summary

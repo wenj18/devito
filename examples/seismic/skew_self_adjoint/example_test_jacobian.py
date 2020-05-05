@@ -10,7 +10,7 @@ configuration['language'] = 'openmp'
 # shape = (nx, ny, nz)
 nx, nz = 201, 181
 shape = (nx, nz)
-dtype = np.float32
+dtype = np.float64
 npad = 10
 qmin = 0.1
 qmax = 100.0
@@ -44,31 +44,25 @@ m0.data[:] = 1.5
 # Model perturbation
 m1.data[:] = 0
 if len(shape) == 2:
-    nxp = nx - 2 * npad 
-    nzp = nz - 2 * npad 
-    m1.data[npad:nx-npad,npad:nz-npad] = -1 + 2 * np.random.rand(nxp, nzp)
+    m1.data[nx//2-1:nx//2+1, nz//2-1:nz//2+1] = \
+        -1 + 2 * np.random.rand(3, 3)
 else:
-    nxp = nx - 2 * npad 
-    nyp = ny - 2 * npad 
-    nzp = nz - 2 * npad 
-    m1.data[npad:nx-npad, npad:ny-npad, npad:nz-npad] = \
-        -1 + 2 * np.random.rand(nxp, nyp, nzp)
+    m1.data[nx//2-1:nx//2+1, ny//2-1:ny//2+1, nz//2-1:nz//2+1] = \
+        -1 + 2 * np.random.rand(3, 3, 3)
 
 # Data perturbation
 rec1 = Receiver(name='rec1', grid=v.grid, time_range=time_axis,
                 coordinates=rec_coords)
 nt,nr = rec1.data.shape
 rec1.data[:] = np.random.rand(nt, nr) 
-print("rec1.shape; ", rec1.shape)
-print("nr,nt; ", nr, nt)
-print(time_axis)
 
+# Modeling
 rec2, u0, _, _ = solver.jacobian_forward(m1, src0, v=m0, save=nt)
 m2, _, _, _ = solver.jacobian_adjoint(rec1, u0, v=m0, save=nt)
 
-#         sum_s = np.dot(src1.data.reshape(-1), src2.data.reshape(-1))
-#         sum_r = np.dot(rec1.data.reshape(-1), rec2.data.reshape(-1))
-#         diff = (sum_s - sum_r) / (sum_s + sum_r)
-#         print("\nadjoint F %s sum_s, sum_r, diff; %+12.6e %+12.6e %+12.6e" %
-#               (shape, sum_s, sum_r, diff))
-#         assert np.isclose(diff, 0., atol=1.e-12)
+sum_m = np.dot(m1.data.reshape(-1), m2.data.reshape(-1))
+sum_d = np.dot(rec1.data.reshape(-1), rec2.data.reshape(-1))
+diff = (sum_m - sum_d) / (sum_m + sum_d)
+print("\nadjoint J %s sum_m, sum_d, diff; %+12.6e %+12.6e %+12.6e" %
+      (shape, sum_m, sum_d, diff))
+assert np.isclose(diff, 0., atol=1.e-12)
