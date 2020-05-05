@@ -244,6 +244,7 @@ class SSA_ISO_AcousticWaveSolver(object):
         op = ISO_JacobianFwdOperator(model, src, rec, self.time_axis,
                                      space_order=self.space_order,
                                      save=save, **self._kwargs)
+
         summary = op.apply(dm=dm, u0=u0, du=du, **kwargs)
         return rec, u0, du, summary
 

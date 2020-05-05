@@ -235,7 +235,7 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     v = model['v']
     wOverQ = model['wOverQ']
 
-    # Create p0, dp wavefields and dv velocity perturbation field
+    # Create p0, dp wavefields and dm velocity perturbation field
     u0 = TimeFunction(name="u0", grid=v.grid,
                       save=time_axis.num if save else None,
                       time_order=2, space_order=space_order)
@@ -244,16 +244,16 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
                       save=time_axis.num if save else None,
                       time_order=2, space_order=space_order)
 
-    dv = Function(name="dv", grid=v.grid, space_order=space_order)
+    dm = Function(name="dm", grid=v.grid, space_order=space_order)
 
     # Time update equations
     # JKW: this is pretty cool, simultaneously solving for p0 and dp!
     # The 1st equation is derived in ssa_01_iso_implementation1.ipynb
     # The 2nd equation is derived in ssa_02_iso_implementation2.ipynb
-    t = u.dimensions[0]
+    t = u0.dimensions[0]
     eqn1 = iso_stencil(u0, model, forward=True)
     eqn2 = iso_stencil(du, model, forward=True,
-                       q=2 * b * dv * v**-2 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2))
+                       q=2 * b * dm * v**-2 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2))
 
     # Construct expression to inject source values, injecting at p0(t+dt)
     src_term = src.inject(field=u0.forward, expr=src * t.spacing**2 * v**2 / b)
@@ -305,7 +305,7 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     v = model['v']
     wOverQ = model['wOverQ']
 
-    # Create p0, dp wavefields and dv velocity perturbation field
+    # Create p0, dp wavefields and dm velocity perturbation field
     u0 = TimeFunction(name="u0", grid=v.grid,
                       save=time_axis.num if save else None,
                       time_order=2, space_order=space_order)
@@ -314,12 +314,12 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
                       save=time_axis.num if save else None,
                       time_order=2, space_order=space_order)
 
-    dv = Function(name="dv", grid=v.grid, space_order=space_order)
+    dm = Function(name="dm", grid=v.grid, space_order=space_order)
 
     # Time update equation
     t = u.dimensions[0]
     eqn = iso_stencil(u0, model, forward=False)
-    dv_update = Inc(dv, du * (2 * b * v**-3 *
+    dm_update = Inc(dm, du * (2 * b * v**-3 *
                               (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2)))
 
     # Construct expression to inject receiver values, injecting at p(t-dt)
@@ -331,5 +331,5 @@ def ISO_JacobianAdjOperator(model, rec, time_axis, space_order=8,
     spacing_map.update({t.spacing: dt})
 #     print(spacing_map)
 
-    return Operator(eqn + rec_term + [dv_update], subs=spacing_map,
+    return Operator(eqn + rec_term + [dm_update], subs=spacing_map,
                     name='ISO_JacobianAdjOperator', **kwargs)
