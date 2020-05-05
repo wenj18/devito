@@ -201,19 +201,19 @@ def defaultSetupIso(npad, shape, dtype,
 
     # Define coordinates
     if len(shape) == 2:
-        src_coords[:, 0] = origin[0] + d * (shape[0] - 2 * npad) / 2
-        src_coords[:, 1] = d
+        src_coords[:, 0] = origin[0] + extent[0] / 2
+        src_coords[:, 1] = 1 * d
 
         rec_coords[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
-        rec_coords[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
+        rec_coords[:, 1] = 2 * d
     else:
-        src_coords[:, 0] = origin[0] + d * (shape[0] - 2 * npad) / 2
-        src_coords[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
-        src_coords[:, 2] = d
+        src_coords[:, 0] = origin[0] + extent[0] / 2
+        src_coords[:, 1] = origin[1] + extent[1] / 2
+        src_coords[:, 2] = 1 * d
 
         rec_coords[:, 0] = np.linspace(0.0, d * (nr - 1), nr)
-        rec_coords[:, 1] = origin[1] + d * (shape[1] - 2 * npad) / 2
-        rec_coords[:, 2] = origin[2] + d * (shape[2] - 2 * npad) / 2
+        rec_coords[:, 1] = origin[1] + extent[1] / 2
+        rec_coords[:, 2] = 2 * d
 
 #         for kr in range(nr):
 #             print("kr,n,rx,ry,rz; %5d %5d %+12.6f %+12.6f %+12.6f" %

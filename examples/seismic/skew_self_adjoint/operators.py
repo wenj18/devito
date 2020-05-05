@@ -253,7 +253,7 @@ def ISO_JacobianFwdOperator(model, src, rec, time_axis, space_order=8,
     t = u0.dimensions[0]
     eqn1 = iso_stencil(u0, model, forward=True)
     eqn2 = iso_stencil(du, model, forward=True,
-                       q=2 * b * dm * v**-2 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2))
+                       q=2 * b * dm * v**-3 * (wOverQ * u0.dt(x0=t-t.spacing/2) + u0.dt2))
 
     # Construct expression to inject source values, injecting at p0(t+dt)
     src_term = src.inject(field=u0.forward, expr=src * t.spacing**2 * v**2 / b)
